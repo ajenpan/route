@@ -1,0 +1,107 @@
+syntax = "proto3";
+
+package route;
+
+option go_package = "./proto";
+
+message UserInfo {
+  uint64 uid = 1;
+}
+
+message LoginRequest {
+  enum MSGID {
+    INVALID_MSGID = 0;
+    ID = 100;
+  }
+  string token = 1;
+}
+
+message LoginResponse {
+  enum MSGID {
+    INVALID_MSGID = 0;
+    ID = 101;
+  }
+
+  enum ErrCode {
+    ok = 0;
+    unkown_err = 1;
+    invalid_token = 11;
+  }
+  ErrCode errcode = 1;
+  UserInfo uinfo = 2;
+}
+
+message AccountLoginRequest {
+  enum MSGID {
+    INVALID_MSGID = 0;
+    ID = 102;
+  }
+  string account = 1;
+  string password = 2;
+}
+
+message AccountLoginResponse {
+  enum MSGID {
+    INVALID_MSGID = 0;
+    ID = 103;
+  }
+
+  enum ErrCode {
+    ok = 0;
+    unkown_err = 1;
+    invalid_token = 11;
+  }
+  ErrCode errcode = 1;
+  UserInfo uinfo = 2;
+}
+
+message EchoRequest {
+  enum MSGID {
+    INVALID_MSGID = 0;
+    ID = 104;
+  }
+  string msg = 1;
+}
+
+message EchoResponse {
+  enum MSGID {
+    INVALID_MSGID = 0;
+    ID = 105;
+  }
+  string msg = 1;
+}
+
+message GroupBroadcastRequest {
+  enum MSGID {
+    INVALID_MSGID = 0;
+    ID = 106;
+  }
+  string group = 1;
+
+  uint32 msgid = 2;
+  bytes msgdata = 3;
+}
+
+message GroupBroadcastResponse {
+  enum MSGID {
+    INVALID_MSGID = 0;
+    ID = 107;
+  }
+  uint32 recv_count = 1;
+}
+
+message JoinGroupRequest {
+  enum MSGID {
+    INVALID_MSGID = 0;
+    ID = 108;
+  }
+  repeated string groups = 1;
+}
+
+message JoinGroupResponse {
+  enum MSGID {
+    INVALID_MSGID = 0;
+    ID = 109;
+  }
+  repeated string groups = 1;
+}
