@@ -14,9 +14,15 @@ type ClientOptions struct {
 	RemoteAddress string
 	OnMessage     OnMessageFunc
 	OnConnStat    OnConnStatFunc
+
+	Timeout time.Duration
 }
 
 func NewClient(opts *ClientOptions) *Client {
+	if opts.Timeout < DefaultMinTimeout {
+		opts.Timeout = DefaultTimeout
+	}
+
 	ret := &Client{
 		Opt: opts,
 	}
@@ -35,21 +41,24 @@ func (c *Client) Connect() error {
 
 	if c.Socket != nil {
 		c.Socket.Close()
+		c.Socket = nil
 	}
 
 	if c.Opt.RemoteAddress == "" {
 		return fmt.Errorf("remote address is empty")
 	}
 
-	conn, err := net.DialTimeout("tcp", c.Opt.RemoteAddress, 10*time.Second)
+	conn, err := net.DialTimeout("tcp", c.Opt.RemoteAddress, c.Opt.Timeout)
 	if err != nil {
 		return err
 	}
 
-	socket := NewSocket(conn, SocketOptions{})
+	socket := NewSocket(conn, SocketOptions{
+		Timeout: c.Opt.Timeout,
+	})
 
 	//send ack
-	p := &PackFrame{}
+	p := socket.newPacket()
 	p.SetType(PacketTypAck)
 	err = socket.writePacket(p)
 	if err != nil {
@@ -67,14 +76,14 @@ func (c *Client) Connect() error {
 		socket.Close()
 		return fmt.Errorf("read ack failed, typ: %d", p.GetType())
 	}
-	socket.id = string(p.Body)
-	c.Socket = socket
-
-	if len(p.Body) > 0 {
-		c.id = string(p.Body)
+	//set socket id
+	if len(p.body) > 0 {
+		socket.id = string(p.body)
 	}
 
 	//here is connect finished
+	c.Socket = socket
+
 	go func() {
 		defer socket.Close()
 
@@ -92,7 +101,7 @@ func (c *Client) Connect() error {
 			tk := time.NewTicker(30 * time.Second)
 			defer tk.Stop()
 
-			heartbeatPakcet := &PackFrame{}
+			heartbeatPakcet := socket.newPacket()
 			heartbeatPakcet.SetType(PacketTypHeartbeat)
 
 			for {
@@ -101,7 +110,7 @@ func (c *Client) Connect() error {
 					nowUnix := uint64(time.Now().Unix())
 					lastSendAt := atomic.LoadUint64(&socket.lastSendAt)
 					if nowUnix-lastSendAt > 30 {
-						socket.SendPacket(heartbeatPakcet)
+						socket.chSend <- heartbeatPakcet
 					}
 				case <-socket.chClosed:
 					fmt.Println("closed heartbeatPakcet")
@@ -112,13 +121,12 @@ func (c *Client) Connect() error {
 
 		var socketErr error = nil
 		for {
-			p := &PackFrame{}
+			p := socket.newPacket()
 			if socketErr = socket.readPacket(p); socketErr != nil {
-				// todo: print out error
+				//todo: print out error
 				break
 			}
 			typ := p.GetType()
-
 			if typ > PacketTypStartAt_ && typ < PacketTypEndAt_ {
 				if c.Opt.OnMessage != nil {
 					c.Opt.OnMessage(socket, p)
@@ -129,6 +137,7 @@ func (c *Client) Connect() error {
 				break
 			}
 		}
+		fmt.Println("socket read error: ", socketErr)
 	}()
 	return nil
 }

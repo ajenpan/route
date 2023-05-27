@@ -114,8 +114,11 @@ func ExtractProtoFile(fd protoreflect.FileDescriptor, handler interface{}) *Call
 
 	return ret
 }
+func GetMessageMsgID(msg proto.Message) int {
+	return GetMessageMsgIDByDesc(msg.ProtoReflect().Descriptor())
+}
 
-func GetMessageMsgID(msg protoreflect.MessageDescriptor) int {
+func GetMessageMsgIDByDesc(msg protoreflect.MessageDescriptor) int {
 	MSGIDDesc := msg.Enums().ByName("MSGID")
 	if MSGIDDesc == nil {
 		return 0
@@ -136,7 +139,7 @@ func ExtractAsyncMethodByMsgID(ms protoreflect.MessageDescriptors, h interface{}
 
 	for i := 0; i < ms.Len(); i++ {
 		msg := ms.Get(i)
-		msgid := GetMessageMsgID(msg)
+		msgid := GetMessageMsgIDByDesc(msg)
 		if msgid == 0 {
 			continue
 		}

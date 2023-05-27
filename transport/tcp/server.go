@@ -8,14 +8,14 @@ import (
 	"time"
 )
 
-var staticIdx uint64
+var socketIdx uint64
 
 func nextID() string {
-	idx := atomic.AddUint64(&staticIdx, 1)
+	idx := atomic.AddUint64(&socketIdx, 1)
 	if idx == 0 {
-		idx = atomic.AddUint64(&staticIdx, 1)
+		idx = atomic.AddUint64(&socketIdx, 1)
 	}
-	return fmt.Sprintf("tcp_%v_%v", idx, time.Now().Unix())
+	return fmt.Sprintf("tcp_%v", idx)
 }
 
 type ServerOptions struct {
@@ -34,7 +34,15 @@ func NewServer(opts ServerOptions) *Server {
 		sockets: make(map[string]*Socket),
 		die:     make(chan bool),
 	}
-
+	if ret.opts.OnMessage == nil {
+		ret.opts.OnMessage = func(s *Socket, p *PackFrame) {}
+	}
+	if ret.opts.OnConn == nil {
+		ret.opts.OnConn = func(s *Socket, stat SocketStat) {}
+	}
+	if ret.opts.HeatbeatInterval == 0 {
+		ret.opts.HeatbeatInterval = DefaultTimeout
+	}
 	if ret.opts.NewIDFunc == nil {
 		ret.opts.NewIDFunc = nextID
 	}
@@ -95,7 +103,8 @@ func (s *Server) Start() error {
 				tempDelay = 0
 
 				socket := NewSocket(conn, SocketOptions{
-					ID: s.opts.NewIDFunc(),
+					ID:      s.opts.NewIDFunc(),
+					Timeout: s.opts.HeatbeatInterval,
 				})
 
 				go s.accept(socket)
@@ -121,7 +130,7 @@ func (n *Server) accept(socket *Socket) {
 	}
 
 	// set socket id
-	ack.Body = []byte(socket.ID())
+	ack.SetBody([]byte(socket.ID()))
 	if err := socket.writePacket(ack); err != nil {
 		return
 	}
@@ -148,11 +157,9 @@ func (n *Server) accept(socket *Socket) {
 		typ := p.GetType()
 
 		if typ > PacketTypStartAt_ && typ < PacketTypEndAt_ {
-			if n.opts.OnMessage != nil {
-				n.opts.OnMessage(socket, p)
-			}
-		} else if typ > PacketTypInnerStartAt_ && typ < PacketTypInnerEndAt_ {
-
+			n.opts.OnMessage(socket, p)
+		} else if typ > PacketTypHeartbeat && typ < PacketTypInnerEndAt_ {
+			//do nothing
 		} else {
 			break
 		}

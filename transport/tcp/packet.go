@@ -27,12 +27,15 @@ const (
 	PacketTypInnerStartAt_ PacketType = iota
 	PacketTypHeartbeat
 	PacketTypAck
-	PacketTypInnerEndAt_ PacketType = 0x0f
+	PacketTypInnerEndAt_
+)
+
+const (
 	// user
-	PacketTypStartAt_   PacketType = 0x0f
-	PacketTypRoute      PacketType = 0x0f + 1
-	PacketTypRouteBrige PacketType = 0x0f + 2
-	PacketTypEndAt_     PacketType = 0xff
+	PacketTypStartAt_ PacketType = 0x0f + iota
+	PacketTypRoute
+	PacketTypRouteBrige
+	PacketTypEndAt_
 )
 
 func Uint24(b []uint8) uint32 {
@@ -47,7 +50,17 @@ func PutUint24(b []uint8, v uint32) {
 	b[2] = uint8(v >> 16)
 }
 
-type PackMeta [1 + 1 + 3]uint8
+const PackMetaLen = 5
+
+type PackMeta []uint8
+
+func IsValidPacketType(t uint8) bool {
+	return t > PacketTypStartAt_ && t < PacketTypEndAt_ || t > PacketTypInnerStartAt_ && t < PacketTypInnerEndAt_
+}
+
+func NewPackMeta() PackMeta {
+	return make([]uint8, PackMetaLen)
+}
 
 func (hr PackMeta) GetType() uint8 {
 	return hr[0]
@@ -69,7 +82,7 @@ func (hr PackMeta) SetHeadLen(t uint8) {
 }
 
 func (hr PackMeta) SetBodyLen(l uint32) {
-	PutUint24(hr[2:4], l)
+	PutUint24(hr[2:5], l)
 }
 
 func (hr PackMeta) Reset() {
@@ -78,33 +91,66 @@ func (hr PackMeta) Reset() {
 	}
 }
 
-func (hr PackMeta) Clone() PackMeta {
-	ret := PackMeta{}
-	copy(ret[:], hr[:])
-	return ret
+func NewEmptyPackFrame() *PackFrame {
+	return &PackFrame{
+		meta: NewPackMeta(),
+	}
+}
+
+func NewPackFrame(t uint8, h []uint8, b []uint8) *PackFrame {
+	p := NewEmptyPackFrame()
+	p.SetType(t)
+	p.SetHead(h)
+	p.SetBody(b)
+	return p
 }
 
 type PackFrame struct {
-	PackMeta
-	Head []uint8
-	Body []uint8
+	meta PackMeta
+	head []uint8
+	body []uint8
 }
 
 func (p *PackFrame) Reset() {
-	p.PackMeta.Reset()
-	p.Body = p.Body[:0]
+	p.meta.Reset()
+	p.body = p.body[:0]
 }
 
 func (p *PackFrame) Clone() *PackFrame {
 	return &PackFrame{
-		PackMeta: p.PackMeta.Clone(),
-		Body:     p.Body[:],
+		meta: p.meta[:],
+		head: p.head[:],
+		body: p.body[:],
 	}
+}
+
+func (p *PackFrame) SetType(t uint8) {
+	p.meta.SetType(t)
+}
+func (p *PackFrame) GetType() uint8 {
+	return p.meta.GetType()
+}
+
+func (p *PackFrame) SetHead(h []uint8) {
+	p.head = h
+	p.meta.SetHeadLen(uint8(len(h)))
+}
+
+func (p *PackFrame) SetBody(b []uint8) {
+	p.body = b
+	p.meta.SetBodyLen(uint32(len(b)))
+}
+
+func (p *PackFrame) GetHead() []uint8 {
+	return p.head
+}
+func (p *PackFrame) GetBody() []uint8 {
+	return p.body
 }
 
 type RouteHead []uint8
 
-const RouteHeadLen = 25
+const RouteHeadLen = 17
 
 type RouteMsgTyp uint8
 
@@ -112,6 +158,7 @@ const (
 	RouteTypAsync RouteMsgTyp = iota
 	RouteTypRequest
 	RouteTypResponse
+	RouteTypRespErr
 )
 
 func CastRoutHead(head []uint8) (RouteHead, error) {
@@ -134,15 +181,15 @@ func (h RouteHead) GetSrouceUID() uint32 {
 }
 
 func (h RouteHead) GetAskID() uint32 {
-	return binary.LittleEndian.Uint32(h[16:20])
+	return binary.LittleEndian.Uint32(h[8:12])
 }
 
 func (h RouteHead) GetMsgID() uint32 {
-	return binary.LittleEndian.Uint32(h[20:24])
+	return binary.LittleEndian.Uint32(h[12:16])
 }
 
 func (h RouteHead) GetMsgTyp() RouteMsgTyp {
-	return RouteMsgTyp(h[24])
+	return RouteMsgTyp(h[16])
 }
 
 func (h RouteHead) SetTargetUID(u uint32) {
@@ -154,15 +201,15 @@ func (h RouteHead) SetSrouceUID(u uint32) {
 }
 
 func (h RouteHead) SetAskID(id uint32) {
-	binary.LittleEndian.PutUint32(h[16:20], id)
+	binary.LittleEndian.PutUint32(h[8:12], id)
 }
 
 func (h RouteHead) SetMsgID(id uint32) {
-	binary.LittleEndian.PutUint32(h[20:24], id)
+	binary.LittleEndian.PutUint32(h[12:16], id)
 }
 
 func (h RouteHead) SetMsgTyp(typ RouteMsgTyp) {
-	h[24] = uint8(typ)
+	h[16] = uint8(typ)
 }
 
 type RouteErrHead RouteHead

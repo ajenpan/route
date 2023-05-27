@@ -4,8 +4,48 @@ package route;
 
 option go_package = "./proto";
 
+message OSInfo {
+  string name = 1;
+  string version = 2;
+  string arch = 3;
+}
+
+message NetworkInfo {
+  string name = 1;
+}
+
+message DriverInfo {
+  string name = 1;
+  string version = 2;
+}
+
+message ClientEnvInfo {
+  OSInfo osinfo = 1;
+  NetworkInfo network = 2;
+}
+
 message UserInfo {
-  uint64 uid = 1;
+  uint32 uid = 1;
+  string uname = 2;
+  string role = 3;
+  repeated string groups = 4;
+}
+
+message Error {
+  enum MSGID {
+    INVALID_MSGID = 0;
+    ID = 98;
+  }
+  int32 code = 2;
+  string detail = 3;
+};
+
+message Echo {
+  enum MSGID {
+    INVALID_MSGID = 0;
+    ID = 99;
+  }
+  bytes body = 1;
 }
 
 message LoginRequest {
@@ -21,14 +61,14 @@ message LoginResponse {
     INVALID_MSGID = 0;
     ID = 101;
   }
-
   enum ErrCode {
     ok = 0;
     unkown_err = 1;
     invalid_token = 11;
   }
   ErrCode errcode = 1;
-  UserInfo uinfo = 2;
+  ClientEnvInfo env_report = 2;
+  UserInfo uinfo = 3;
 }
 
 message AccountLoginRequest {
@@ -38,6 +78,7 @@ message AccountLoginRequest {
   }
   string account = 1;
   string password = 2;
+  ClientEnvInfo env_report = 3;
 }
 
 message AccountLoginResponse {
@@ -49,7 +90,7 @@ message AccountLoginResponse {
   enum ErrCode {
     ok = 0;
     unkown_err = 1;
-    invalid_token = 11;
+    invalid_pwd = 11;
   }
   ErrCode errcode = 1;
   UserInfo uinfo = 2;
@@ -104,4 +145,100 @@ message JoinGroupResponse {
     ID = 109;
   }
   repeated string groups = 1;
+}
+
+message Page {
+  uint32 start_at = 1;
+  uint32 end_at = 2;
+}
+
+message ListGroupRequest {
+  enum MSGID {
+    INVALID_MSGID = 0;
+    ID = 110;
+  }
+  Page page = 1;
+}
+
+message ListGroupResponse {
+  enum MSGID {
+    INVALID_MSGID = 0;
+    ID = 111;
+  }
+  repeated string groups = 1;
+  uint32 total = 2;
+}
+
+message CreateGroupRequest {
+  enum MSGID {
+    INVALID_MSGID = 0;
+    ID = 112;
+  }
+  string group = 1;
+  repeated uint32 invite = 2;
+}
+
+message CreateGroupResponse {
+  enum MSGID {
+    INVALID_MSGID = 0;
+    ID = 113;
+  }
+  string group = 1;
+}
+
+message DeleteGroupRequest {
+  enum MSGID {
+    INVALID_MSGID = 0;
+    ID = 114;
+  }
+  string group = 1;
+}
+
+message DeleteGroupResponse {
+  enum MSGID {
+    INVALID_MSGID = 0;
+    ID = 115;
+  }
+  string group = 1;
+}
+
+message PutInGroupRequest {
+  enum MSGID {
+    INVALID_MSGID = 0;
+    ID = 116;
+  }
+  string group = 1;
+  repeated uint32 invite = 2;
+}
+
+message PutInGroupResponse {
+  enum MSGID {
+    INVALID_MSGID = 0;
+    ID = 117;
+  }
+  enum ErrCode {
+    ok = 0;
+    unkown_err = 1;
+    group_not_found = 2;
+  }
+  ErrCode errcode = 1;
+  repeated uint32 invite = 2;
+}
+
+message ListGroupSessionRequest {
+  enum MSGID {
+    INVALID_MSGID = 0;
+    ID = 118;
+  }
+  string group = 1;
+  Page page = 2;
+}
+
+message ListGroupSessionResponse {
+  enum MSGID {
+    INVALID_MSGID = 0;
+    ID = 119;
+  }
+  repeated UserInfo uinfos = 1;
+  uint32 total = 2;
 }

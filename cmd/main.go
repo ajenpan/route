@@ -5,24 +5,53 @@ import (
 	"fmt"
 	"os"
 
+	"route/auth"
 	"route/handle"
 	"route/transport/tcp"
 	"route/utils/rsagen"
 	"route/utils/signal"
 )
 
-func LoadAuthPublicKey() (*rsa.PublicKey, error) {
-	publicRaw, err := os.ReadFile("public.pem")
+const PrivateKeyFile = "private.pem"
+const PublicKeyFile = "public.pem"
+
+func ReadRSAKey() ([]byte, []byte, error) {
+	privateRaw, err := os.ReadFile(PrivateKeyFile)
 	if err != nil {
-		return nil, err
+		privateKey, publicKey, err := rsagen.GenerateRsaPem(2048)
+		if err != nil {
+			return nil, nil, err
+		}
+		privateRaw = []byte(privateKey)
+		os.WriteFile(PrivateKeyFile, []byte(privateKey), 0644)
+		os.WriteFile(PublicKeyFile, []byte(publicKey), 0644)
 	}
-	pk, err := rsagen.ParseRsaPublicKeyFromPem(publicRaw)
-	return pk, err
+	publicRaw, err := os.ReadFile(PublicKeyFile)
+	if err != nil {
+		return nil, nil, err
+	}
+	return privateRaw, publicRaw, nil
 }
 
-func main() {
+func LoadAuthKey() (*rsa.PrivateKey, *rsa.PublicKey, error) {
+	rawpr, rawpu, err := ReadRSAKey()
+	if err != nil {
+		return nil, nil, err
+	}
+	pr, err := rsagen.ParseRsaPrivateKeyFromPem(rawpr)
+	if err != nil {
+		return nil, nil, err
+	}
+	pu, err := rsagen.ParseRsaPublicKeyFromPem(rawpu)
+	if err != nil {
+		return nil, nil, err
+	}
+	return pr, pu, nil
+}
+
+func StartServer(listenAt string) {
 	var err error
-	pk, err := LoadAuthPublicKey()
+	_, pk, err := LoadAuthKey()
 	if err != nil {
 		panic(err)
 	}
@@ -30,10 +59,11 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	h.PublicKey = pk
-
+	h.Authc = &auth.LocalAuth{
+		PK: pk,
+	}
 	svr := tcp.NewServer(tcp.ServerOptions{
-		Address:   ":14321",
+		Address:   listenAt,
 		OnMessage: h.OnMessage,
 		OnConn:    h.OnConn,
 	})
@@ -44,5 +74,11 @@ func main() {
 	}
 
 	fmt.Println("server started,listening on", svr.Address())
+	signal.WaitShutdown()
+}
+
+func main() {
+	// StartClient()
+	StartServer(":14321")
 	signal.WaitShutdown()
 }

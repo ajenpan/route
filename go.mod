@@ -3,6 +3,7 @@ module route
 go 1.20
 
 require (
+	github.com/emirpasic/gods v1.18.1
 	github.com/gobwas/ws v1.2.1
 	github.com/golang-jwt/jwt/v5 v5.0.0
 	google.golang.org/protobuf v1.30.0

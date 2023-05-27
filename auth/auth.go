@@ -1,11 +1,11 @@
 package auth
 
 type UserInfo struct {
-	Uid   int64
-	Uname string
+	ID   uint32
+	Name string
+	Role string
 }
 
 type Auth interface {
-	TokenAuth(token string) *UserInfo
-	AccountAuth(account string, password string) *UserInfo
+	TokenAuth(token string) (*UserInfo, error)
 }

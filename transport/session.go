@@ -7,6 +7,10 @@ import (
 	"time"
 )
 
+// todo list :
+// 1. tcp socket session
+// 2. web socket session
+
 type SessionStat int32
 
 const (

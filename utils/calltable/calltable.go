@@ -19,6 +19,7 @@ const EndpointSplit = "/"
 type Method struct {
 	Imp   reflect.Method
 	Style MethodStyle
+	Name  string
 
 	RequestType  reflect.Type
 	ResponseType reflect.Type

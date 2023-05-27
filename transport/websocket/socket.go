@@ -65,7 +65,7 @@ func (s *Socket) ID() string {
 
 func (s *Socket) SendPacket(p *Packet) error {
 	if atomic.LoadInt32((*int32)(&s.state)) == int32(Disconnected) {
-		return errors.New("sendPacket failed, the socket is disconnected")
+		return errors.New("send packet failed, the socket is disconnected")
 	}
 	s.chSend <- p
 	return nil

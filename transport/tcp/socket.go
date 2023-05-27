@@ -3,7 +3,6 @@ package tcp
 import (
 	"io"
 	"net"
-	"sync"
 	"sync/atomic"
 	"time"
 
@@ -17,29 +16,32 @@ const (
 	Connected    SocketStat = iota
 )
 
+var DefaultTimeout = 30 * time.Second
+var DefaultMinTimeout = 1 * time.Second
+
 type OnMessageFunc func(*Socket, *PackFrame)
 type OnConnStatFunc func(*Socket, SocketStat)
 type NewIDFunc func() string
 
 type SocketOptions struct {
-	ID string
+	ID      string
+	Timeout time.Duration
 }
 
 type SocketOption func(*SocketOptions)
 
 func NewSocket(conn net.Conn, opts SocketOptions) *Socket {
+	if opts.Timeout < DefaultMinTimeout {
+		opts.Timeout = DefaultTimeout
+	}
+
 	ret := &Socket{
 		id:       opts.ID,
 		conn:     conn,
-		timeOut:  120 * time.Second,
+		timeOut:  opts.Timeout,
 		chSend:   make(chan *PackFrame, 10),
 		chClosed: make(chan bool),
 		state:    Connected,
-		packetpool: sync.Pool{
-			New: func() interface{} {
-				return &PackFrame{}
-			},
-		},
 	}
 	return ret
 }
@@ -57,19 +59,7 @@ type Socket struct {
 	lastSendAt uint64
 	lastRecvAt uint64
 
-	askidIdx uint32
-
-	packetpool sync.Pool
-
 	transport.MapMeta
-}
-
-func (s *Socket) GetAskID() uint32 {
-	ret := atomic.AddUint32(&s.askidIdx, 1)
-	if ret == 0 {
-		ret = atomic.AddUint32(&s.askidIdx, 1)
-	}
-	return ret
 }
 
 func (s *Socket) ID() string {
@@ -85,29 +75,30 @@ func (s *Socket) SetUID(uid uint32) {
 }
 
 func (s *Socket) SendPacket(p *PackFrame) error {
-	if atomic.LoadInt32((*int32)(&s.state)) == int32(Disconnected) {
-		return ErrDisconn
-	}
-	if len(p.Body) > MaxPacketSize || len(p.Body) != int(p.GetBodyLen()) {
+	if len(p.body) > MaxPacketSize {
 		return ErrBodySizeWrong
 	}
-	if len(p.Head) != int(p.GetHeadLen()) {
-		return ErrHeadSizeWrong
-	}
-	if p.GetType() <= PacketTypEndAt_ || p.GetType() >= PacketTypEndAt_ {
+	if !IsValidPacketType(p.GetType()) {
 		return ErrWrongPacketType
+	}
+	return s.sendPacket(p)
+}
+
+func (s *Socket) sendPacket(p *PackFrame) error {
+	if atomic.LoadInt32((*int32)(&s.state)) == int32(Disconnected) {
+		return ErrDisconn
 	}
 	s.chSend <- p
 	return nil
 }
 
-func (s *Socket) Close() {
+func (s *Socket) Close() error {
 	if s == nil {
-		return
+		return nil
 	}
 	stat := atomic.SwapInt32((*int32)(&s.state), int32(Disconnected))
 	if stat == int32(Disconnected) {
-		return
+		return nil
 	}
 
 	if s.conn != nil {
@@ -116,21 +107,28 @@ func (s *Socket) Close() {
 	}
 	close(s.chSend)
 	close(s.chClosed)
+	return nil
 }
 
 // returns the remote network address.
-func (s *Socket) RemoteAddr() net.Addr {
+func (s *Socket) RemoteAddr() string {
 	if s == nil {
-		return nil
+		return ""
 	}
-	return s.conn.RemoteAddr()
+	if s.conn == nil {
+		return ""
+	}
+	return s.conn.RemoteAddr().String()
 }
 
-func (s *Socket) LocalAddr() net.Addr {
+func (s *Socket) LocalAddr() string {
 	if s == nil {
-		return nil
+		return ""
 	}
-	return s.conn.LocalAddr()
+	if s.conn == nil {
+		return ""
+	}
+	return s.conn.LocalAddr().String()
 }
 
 // retrun socket work status
@@ -148,7 +146,7 @@ func (s *Socket) writeWork() {
 }
 
 func (s *Socket) newPacket() *PackFrame {
-	return &PackFrame{}
+	return NewEmptyPackFrame()
 }
 
 func writeAll(conn net.Conn, raw []byte) (int, error) {
@@ -177,24 +175,28 @@ func (s *Socket) readPacket(p *PackFrame) error {
 		s.conn.SetReadDeadline(time.Now().Add(s.timeOut))
 	}
 
-	_, err = io.ReadFull(s.conn, p.PackMeta[:])
+	_, err = io.ReadFull(s.conn, p.meta)
 	if err != nil {
 		return err
 	}
 
-	headlen := p.GetHeadLen()
+	if !IsValidPacketType(p.GetType()) {
+		return ErrWrongPacketType
+	}
+
+	headlen := p.meta.GetHeadLen()
 	if headlen > 0 {
-		p.Head = make([]byte, headlen)
-		_, err = io.ReadFull(s.conn, p.Head)
+		p.head = make([]byte, headlen)
+		_, err = io.ReadFull(s.conn, p.head)
 		if err != nil {
 			return err
 		}
 	}
 
-	bodylen := p.GetBodyLen()
+	bodylen := p.meta.GetBodyLen()
 	if bodylen > 0 {
-		p.Body = make([]byte, bodylen)
-		_, err = io.ReadFull(s.conn, p.Body)
+		p.body = make([]byte, bodylen)
+		_, err = io.ReadFull(s.conn, p.body)
 		if err != nil {
 			return err
 		}
@@ -208,31 +210,26 @@ func (s *Socket) writePacket(p *PackFrame) error {
 	if s.Status() == Disconnected {
 		return ErrDisconn
 	}
-	if int(p.GetHeadLen()) != len(p.Head) {
-		return ErrParseHead
-	}
-	if int(p.GetBodyLen()) != len(p.Body) {
-		return ErrParseHead
-	}
-	if len(p.Body) >= MaxPacketSize {
+
+	if len(p.body) >= MaxPacketSize {
 		return ErrBodySizeWrong
 	}
 
 	var err error
-	_, err = writeAll(s.conn, p.PackMeta[:])
+	_, err = writeAll(s.conn, p.meta[:])
 	if err != nil {
 		return err
 	}
 
-	if len(p.Head) > 0 {
-		_, err = writeAll(s.conn, p.Head)
+	if len(p.head) > 0 {
+		_, err = writeAll(s.conn, p.head)
 		if err != nil {
 			return err
 		}
 	}
 
-	if len(p.Body) > 0 {
-		_, err = writeAll(s.conn, p.Body)
+	if len(p.body) > 0 {
+		_, err = writeAll(s.conn, p.body)
 		if err != nil {
 			return err
 		}
