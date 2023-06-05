@@ -6,10 +6,11 @@ import (
 	"sync"
 	"time"
 
+	"github.com/rs/zerolog/log"
 	"google.golang.org/protobuf/proto"
 
 	"route/auth"
-	"route/permit"
+	"route/permission"
 	msg "route/proto"
 	group "route/sessiongroup"
 	"route/transport/tcp"
@@ -44,7 +45,7 @@ type Router struct {
 	gm group.Manager
 
 	Authc   auth.Auth
-	Permitc permit.Permit
+	Permitc permission.Permit
 
 	Selfinfo *UserInfo
 }
@@ -59,10 +60,20 @@ var tcpSocketKey = tcpSocketKeyT{}
 var tcpPacketKey = tcpPacketKeyT{}
 
 func (r *Router) OnMessage(s *tcp.Socket, p *tcp.PackFrame) {
+	var err error
+	defer func() {
+		if err != nil {
+			log.Print(err)
+		}
+	}()
+
 	ptype := p.GetType()
 
 	if ptype == tcp.PacketTypRoute {
-		head, err := tcp.CastRoutHead(p.GetHead())
+
+		var head tcp.RouteHead
+
+		head, err = tcp.CastRoutHead(p.GetHead())
 		if err != nil {
 			return
 		}
@@ -72,15 +83,9 @@ func (r *Router) OnMessage(s *tcp.Socket, p *tcp.PackFrame) {
 			return
 		}
 
-		defer func() {
-			if err != nil {
-				fmt.Println(err)
-			}
-		}()
-
 		suid := s.UID()
 		if suid == 0 {
-			err = fmt.Errorf("not login")
+			err = fmt.Errorf("session:%v not login", s.ID())
 			return
 		}
 
@@ -101,7 +106,7 @@ func (r *Router) OnMessage(s *tcp.Socket, p *tcp.PackFrame) {
 }
 
 func (r *Router) OnConn(s *tcp.Socket, stat tcp.SocketStat) {
-	fmt.Println("OnConn", s.ID(), ",stat:", int(stat))
+	log.Print("OnConn", s.ID(), ",stat:", int(stat))
 
 	if stat == tcp.Disconnected {
 		uinfo := GetSocketUserInfo(s)
@@ -162,7 +167,7 @@ func (r *Router) onUserOffline(s *tcp.Socket, uinfo *UserInfo) {
 }
 
 func (r *Router) PublishEvent(event proto.Message) {
-	fmt.Printf("[Mock PublishEvent] name:%v, msg:%v\n", string(proto.MessageName(event).Name()), event)
+	log.Printf("[Mock PublishEvent] name:%v, msg:%v\n", string(proto.MessageName(event).Name()), event)
 }
 
 func (r *Router) SendMessage(s *tcp.Socket, askid uint32, msgtyp tcp.RouteMsgTyp, m proto.Message) error {
@@ -193,7 +198,7 @@ func (r *Router) OnCall(s *tcp.Socket, p *tcp.PackFrame, head tcp.RouteHead, bod
 
 	enable := r.callEnable(s, uint32(msgid))
 	if !enable {
-		fmt.Println("not enable to call this method:", msgid)
+		log.Print("not enable to call this method:", msgid)
 		dealSocketErrCnt(s)
 		return
 	}
@@ -201,14 +206,14 @@ func (r *Router) OnCall(s *tcp.Socket, p *tcp.PackFrame, head tcp.RouteHead, bod
 	askid := head.GetAskID()
 	method := r.ct.Get(msgid)
 	if method == nil {
-		fmt.Println("not found method,msgid:", msgid)
+		log.Print("not found method,msgid:", msgid)
 		dealSocketErrCnt(s)
 		return
 	}
 
 	reqRaw := method.NewRequest()
 	if reqRaw == nil {
-		fmt.Println("not found request,msgid:", msgid)
+		log.Print("not found request,msgid:", msgid)
 		return
 	}
 
@@ -241,10 +246,10 @@ func (r *Router) OnCall(s *tcp.Socket, p *tcp.PackFrame, head tcp.RouteHead, bod
 				Detail: resperr.Error(),
 			})
 		default:
-			fmt.Println("not support error type:")
+			log.Print("not support error type:")
 		}
 		if senderr != nil {
-			fmt.Println("send err failed:", senderr)
+			log.Print("send err failed:", senderr)
 		}
 		return
 	}
@@ -261,7 +266,7 @@ func (r *Router) OnCall(s *tcp.Socket, p *tcp.PackFrame, head tcp.RouteHead, bod
 		}
 
 		r.SendMessage(s, askid, respMsgTyp, resp)
-		fmt.Printf("oncall sid:%v,uid:%v,msgid:%v,askid:%v,req:%v,resp:%v\n", s.ID(), s.UID(), msgid, askid, req, resp)
+		log.Printf("oncall sid:%v,uid:%v,msgid:%v,askid:%v,req:%v,resp:%v\n", s.ID(), s.UID(), msgid, askid, req, resp)
 		return
 	}
 }

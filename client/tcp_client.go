@@ -145,7 +145,7 @@ func (c *TcpClient) SyncCall(target uint32, ctx context.Context, req proto.Messa
 				err = fmt.Errorf("msgid not match, expect:%v, got:%v", expectmsgid, gotmsgid)
 			}
 		} else {
-			err = fmt.Errorf("msgtyp not match")
+			err = fmt.Errorf("unknow msgtype:%v", msgtype)
 		}
 	})
 

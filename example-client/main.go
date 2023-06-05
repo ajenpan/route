@@ -3,6 +3,7 @@ package main
 import (
 	"crypto/rsa"
 	"fmt"
+	"log"
 	"os"
 	"time"
 
@@ -57,17 +58,17 @@ func StartClient() {
 	if err != nil {
 		panic(err)
 	}
-	jwt, err := auth.GenerateToken(pk, 111, "test-cli-111", "user")
+	jwtstr, err := auth.GenerateToken(pk, 111, "test-cli-111", "user")
 	if err != nil {
 		panic(err)
 	}
-	c := client.NewTcpClient("localhost:14321", jwt)
+	c := client.NewTcpClient("localhost:14321", jwtstr)
 	c.OnMessageFunc = func(c *client.TcpClient, p *tcp.PackFrame) {
 		ptype := p.GetType()
 		if ptype == tcp.PacketTypRoute {
 			head, err := tcp.CastRoutHead(p.GetHead())
 			if err != nil {
-				fmt.Println(err)
+				log.Println(err)
 				return
 			}
 			msgtype := head.GetMsgTyp()
@@ -82,7 +83,7 @@ func StartClient() {
 		}
 	}
 	c.OnLoginFunc = func(c *client.TcpClient, stat client.LoginStat) {
-		fmt.Println("login stat:", stat)
+		log.Println("login stat:", stat)
 		if stat == client.LoginStat_Success {
 			go func() {
 				tick := time.NewTicker(2 * time.Second)

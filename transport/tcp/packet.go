@@ -111,6 +111,10 @@ type PackFrame struct {
 	body []uint8
 }
 
+func (p *PackFrame) Name() string {
+	return "tcp-binary"
+}
+
 func (p *PackFrame) Reset() {
 	p.meta.Reset()
 	p.body = p.body[:0]

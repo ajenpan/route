@@ -1,9 +1,6 @@
-package permit
+package permission
 
-//TODO list:
-//1. read from config
-//2. read from other service
-
+// TODO list: read from config
 type Permit interface {
 	RoleGroups(role string) []string
 	CallEnable(role string, msgid uint32) bool

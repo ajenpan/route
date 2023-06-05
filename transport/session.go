@@ -19,10 +19,11 @@ const (
 )
 
 type Packet interface {
-	Type() int
 	Name() string
-	Head() []byte
-	Body() []byte
+	GetType() int
+	GetHead() []byte
+	GetBody() []byte
+	Clone() Packet
 }
 
 type OnMessageFunc func(Session, Packet)
@@ -53,6 +54,7 @@ type SessionMeta interface {
 
 type Session interface {
 	ID() string
+	UID() uint32
 	String() string
 	RemoteAddr() string
 	LocalAddr() string
