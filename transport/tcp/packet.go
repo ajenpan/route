@@ -3,6 +3,7 @@ package tcp
 import (
 	"encoding/binary"
 	"errors"
+	"io"
 )
 
 // Codec constants.
@@ -17,8 +18,8 @@ var ErrHeadSizeWrong = errors.New("packet head size error")
 var ErrParseHead = errors.New("parse packet error")
 var ErrDisconn = errors.New("socket disconnected")
 
-// -<PacketType>-|-<HeadLen>-|-<BodyLen>-|-<Body>-
-// -1------------|-1---------|-3---------|--------
+// -<PacketType>-|-<HeadLen>-|-<BodyLen>-|-<Head>-|-<Body>-
+// -1------------|-1---------|-3---------|--------|--------
 
 type PacketType = uint8
 
@@ -37,6 +38,11 @@ const (
 	PacketTypRouteBrige
 	PacketTypEndAt_
 )
+
+type Pakcet interface {
+	io.ReaderFrom
+	io.WriterTo
+}
 
 func Uint24(b []uint8) uint32 {
 	_ = b[2] // bounds check hint to compiler; see golang.org/issue/14808
@@ -109,6 +115,32 @@ type PackFrame struct {
 	meta PackMeta
 	head []uint8
 	body []uint8
+}
+
+func (p *PackFrame) ReadFrom(reader io.Reader) (int64, error) {
+	var err error
+	metalen, err := io.ReadFull(reader, p.meta)
+	if err != nil {
+		return 0, err
+	}
+	headlen := p.meta.GetHeadLen()
+	if headlen > 0 {
+		p.head = make([]byte, headlen)
+		_, err = io.ReadFull(reader, p.head)
+
+		if err != nil {
+			return 0, err
+		}
+	}
+	bodylen := p.meta.GetBodyLen()
+	if bodylen > 0 {
+		p.body = make([]byte, bodylen)
+		_, err = io.ReadFull(reader, p.body)
+		if err != nil {
+			return 0, err
+		}
+	}
+	return int64(metalen + int(headlen) + int(bodylen)), nil
 }
 
 func (p *PackFrame) Name() string {

@@ -54,7 +54,6 @@ type Socket struct {
 	chSend   chan *Packet // push message queue
 	chClosed chan bool
 
-	// timeOut    time.Duration
 	lastSendAt uint64
 	lastRecvAt uint64
 }
