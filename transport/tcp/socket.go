@@ -1,7 +1,6 @@
 package tcp
 
 import (
-	"io"
 	"net"
 	"sync/atomic"
 	"time"
@@ -39,7 +38,7 @@ func NewSocket(conn net.Conn, opts SocketOptions) *Socket {
 		id:       opts.ID,
 		conn:     conn,
 		timeOut:  opts.Timeout,
-		chSend:   make(chan *PackFrame, 10),
+		chSend:   make(chan Packet, 100),
 		chClosed: make(chan bool),
 		state:    Connected,
 	}
@@ -51,7 +50,7 @@ type Socket struct {
 	state    SocketStat // current state
 	id       string
 	uid      uint32
-	chSend   chan *PackFrame // push message queue
+	chSend   chan Packet // push message queue
 	chClosed chan bool
 
 	timeOut time.Duration
@@ -74,17 +73,7 @@ func (s *Socket) SetUID(uid uint32) {
 	atomic.StoreUint32(&s.uid, uid)
 }
 
-func (s *Socket) SendPacket(p *PackFrame) error {
-	if len(p.body) > MaxPacketSize {
-		return ErrBodySizeWrong
-	}
-	if !IsValidPacketType(p.GetType()) {
-		return ErrWrongPacketType
-	}
-	return s.sendPacket(p)
-}
-
-func (s *Socket) sendPacket(p *PackFrame) error {
+func (s *Socket) SendPacket(p Packet) error {
 	if atomic.LoadInt32((*int32)(&s.state)) == int32(Disconnected) {
 		return ErrDisconn
 	}
@@ -145,96 +134,26 @@ func (s *Socket) writeWork() {
 	}
 }
 
-func (s *Socket) newPacket() *PackFrame {
-	return NewEmptyPackFrame()
-}
-
-func writeAll(conn net.Conn, raw []byte) (int, error) {
-	writelen := 0
-	rawSize := len(raw)
-
-	for writelen < rawSize {
-		n, err := conn.Write(raw[writelen:])
-		writelen += n
-		if err != nil {
-			return writelen, err
-		}
-	}
-
-	return writelen, nil
-}
-
-func (s *Socket) readPacket(p *PackFrame) error {
+func (s *Socket) readPacket(p Packet) error {
 	if s.Status() == Disconnected {
 		return ErrDisconn
 	}
-
-	var err error
-
 	if s.timeOut > 0 {
 		s.conn.SetReadDeadline(time.Now().Add(s.timeOut))
 	}
-
-	_, err = io.ReadFull(s.conn, p.meta)
-	if err != nil {
-		return err
-	}
-
-	if !IsValidPacketType(p.GetType()) {
-		return ErrWrongPacketType
-	}
-
-	headlen := p.meta.GetHeadLen()
-	if headlen > 0 {
-		p.head = make([]byte, headlen)
-		_, err = io.ReadFull(s.conn, p.head)
-		if err != nil {
-			return err
-		}
-	}
-
-	bodylen := p.meta.GetBodyLen()
-	if bodylen > 0 {
-		p.body = make([]byte, bodylen)
-		_, err = io.ReadFull(s.conn, p.body)
-		if err != nil {
-			return err
-		}
-	}
-
-	atomic.StoreUint64(&s.lastRecvAt, uint64(time.Now().Unix()))
-	return nil
+	_, err := p.ReadFrom(s.conn)
+	s.lastRecvAt = uint64(time.Now().Unix())
+	return err
 }
 
-func (s *Socket) writePacket(p *PackFrame) error {
+func (s *Socket) writePacket(p Packet) error {
 	if s.Status() == Disconnected {
 		return ErrDisconn
 	}
-
-	if len(p.body) >= MaxPacketSize {
-		return ErrBodySizeWrong
+	if s.timeOut > 0 {
+		s.conn.SetWriteDeadline(time.Now().Add(s.timeOut))
 	}
-
-	var err error
-	_, err = writeAll(s.conn, p.meta[:])
-	if err != nil {
-		return err
-	}
-
-	if len(p.head) > 0 {
-		_, err = writeAll(s.conn, p.head)
-		if err != nil {
-			return err
-		}
-	}
-
-	if len(p.body) > 0 {
-		_, err = writeAll(s.conn, p.body)
-		if err != nil {
-			return err
-		}
-	}
-
-	atomic.StoreUint64(&s.lastSendAt, uint64(time.Now().Unix()))
-	return nil
+	_, err := p.WriteTo(s.conn)
+	s.lastSendAt = uint64(time.Now().Unix())
+	return err
 }

@@ -58,7 +58,7 @@ func (c *Client) Connect() error {
 	})
 
 	//send ack
-	p := socket.newPacket()
+	p := NewEmptyPackFrame()
 	p.SetType(PacketTypAck)
 	err = socket.writePacket(p)
 	if err != nil {
@@ -101,7 +101,7 @@ func (c *Client) Connect() error {
 			tk := time.NewTicker(30 * time.Second)
 			defer tk.Stop()
 
-			heartbeatPakcet := socket.newPacket()
+			heartbeatPakcet := NewEmptyPackFrame()
 			heartbeatPakcet.SetType(PacketTypHeartbeat)
 
 			for {
@@ -121,7 +121,7 @@ func (c *Client) Connect() error {
 
 		var socketErr error = nil
 		for {
-			p := socket.newPacket()
+			p := NewEmptyPackFrame()
 			if socketErr = socket.readPacket(p); socketErr != nil {
 				//todo: print out error
 				break

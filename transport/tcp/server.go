@@ -120,7 +120,7 @@ func (n *Server) accept(socket *Socket) {
 	defer socket.Close()
 
 	//read ack
-	ack := socket.newPacket()
+	ack := NewEmptyPackFrame()
 	if err := socket.readPacket(ack); err != nil {
 		return
 	}
@@ -148,7 +148,7 @@ func (n *Server) accept(socket *Socket) {
 	var socketErr error = nil
 
 	for {
-		p := socket.newPacket()
+		p := NewEmptyPackFrame()
 		socketErr = socket.readPacket(p)
 		if socketErr != nil {
 			break

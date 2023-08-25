@@ -39,7 +39,7 @@ const (
 	PacketTypEndAt_
 )
 
-type Pakcet interface {
+type Packet interface {
 	io.ReaderFrom
 	io.WriterTo
 }
@@ -127,7 +127,6 @@ func (p *PackFrame) ReadFrom(reader io.Reader) (int64, error) {
 	if headlen > 0 {
 		p.head = make([]byte, headlen)
 		_, err = io.ReadFull(reader, p.head)
-
 		if err != nil {
 			return 0, err
 		}
@@ -141,6 +140,31 @@ func (p *PackFrame) ReadFrom(reader io.Reader) (int64, error) {
 		}
 	}
 	return int64(metalen + int(headlen) + int(bodylen)), nil
+}
+
+func (p *PackFrame) WriteTo(writer io.Writer) (int64, error) {
+	ret := int64(0)
+
+	n, err := writer.Write(p.meta)
+	ret += int64(n)
+	if err != nil {
+		return ret, err
+	}
+
+	n, err = writer.Write(p.head)
+	ret += int64(n)
+	if err != nil {
+		return ret, err
+	}
+
+	if len(p.body) > 0 {
+		n, err = writer.Write(p.body)
+		ret += int64(n)
+		if err != nil {
+			return ret, err
+		}
+	}
+	return ret, nil
 }
 
 func (p *PackFrame) Name() string {
