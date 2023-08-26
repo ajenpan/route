@@ -23,7 +23,7 @@ const (
 	LoginStat_Disconnect LoginStat = iota
 )
 
-type OnRespCBFunc func(*TcpClient, *tcp.PackFrame)
+type OnRespCBFunc func(*TcpClient, *tcp.THVPacket)
 
 type TcpClient struct {
 	*tcp.Client
@@ -31,7 +31,7 @@ type TcpClient struct {
 	isAuth   bool
 	AuthFunc func(c *TcpClient) error
 
-	OnMessageFunc func(c *TcpClient, p *tcp.PackFrame)
+	OnMessageFunc func(c *TcpClient, p *tcp.THVPacket)
 	OnLoginFunc   func(c *TcpClient, stat LoginStat)
 	AutoRecconect bool
 
@@ -55,26 +55,28 @@ func (c *TcpClient) Reconnect() {
 	}
 }
 
-func (c *TcpClient) MakeRequestPacket(target uint32, req proto.Message) (*tcp.PackFrame, uint32, error) {
-	msgid := calltable.GetMessageMsgID(req)
-	if msgid == 0 {
-		return nil, 0, fmt.Errorf("not found msgid:%v", msgid)
-	}
+func (c *TcpClient) MakeRequestPacket(target uint32, req proto.Message) (*tcp.THVPacket, uint32, error) {
+	// msgid := calltable.GetMessageMsgID(req)
+	// if msgid == 0 {
+	// 	return nil, 0, fmt.Errorf("not found msgid:%v", msgid)
+	// }
 
-	raw, err := proto.Marshal(req)
-	if err != nil {
-		return nil, 0, err
-	}
-	askid := c.GetAskID()
-	head := tcp.NewRoutHead()
-	head.SetAskID(askid)
-	head.SetMsgID(uint32(msgid))
-	head.SetTargetUID(target)
-	head.SetMsgTyp(tcp.RouteTypRequest)
+	// raw, err := proto.Marshal(req)
+	// if err != nil {
+	// 	return nil, 0, err
+	// }
+	// askid := c.GetAskID()
+	// head := tcp.NewRoutHead()
+	// head.SetAskID(askid)
+	// head.SetMsgID(uint32(msgid))
+	// head.SetTargetUID(target)
+	// head.SetMsgTyp(tcp.RouteTypRequest)
 
-	ret := tcp.NewPackFrame(tcp.PacketTypRoute, head, raw)
+	// ret := tcp.NewPackFrame(tcp.PacketTypRoute, head, raw)
 
-	return ret, askid, nil
+	// return ret, askid, nil
+
+	return nil, 0, nil
 }
 
 func SendRequestWithCB[T proto.Message](c *TcpClient, target uint32, ctx context.Context, req proto.Message, cb func(error, *TcpClient, T)) {
@@ -118,35 +120,35 @@ func (c *TcpClient) SyncCall(target uint32, ctx context.Context, req proto.Messa
 
 	res := make(chan error, 1)
 
-	c.SetCallback(askid, func(c *TcpClient, p *tcp.PackFrame) {
-		var err error
-		defer func() {
-			res <- err
-		}()
-		head, err := tcp.CastRoutHead(p.GetHead())
-		if err != nil {
-			return
-		}
-		msgtype := head.GetMsgTyp()
-		if msgtype == tcp.RouteTypRespErr {
-			resperr := &msg.Error{Code: -1}
-			err := proto.Unmarshal(p.GetBody(), resperr)
-			if err != nil {
-				return
-			}
-			err = resperr
-			return
-		} else if head.GetMsgTyp() == tcp.RouteTypResponse {
-			gotmsgid := head.GetMsgID()
-			expectmsgid := uint32(calltable.GetMessageMsgID(resp))
-			if gotmsgid == expectmsgid {
-				err = proto.Unmarshal(p.GetBody(), resp)
-			} else {
-				err = fmt.Errorf("msgid not match, expect:%v, got:%v", expectmsgid, gotmsgid)
-			}
-		} else {
-			err = fmt.Errorf("unknow msgtype:%v", msgtype)
-		}
+	c.SetCallback(askid, func(c *TcpClient, p *tcp.THVPacket) {
+		// var err error
+		// defer func() {
+		// 	res <- err
+		// }()
+		// head, err := tcp.CastRoutHead(p.GetHead())
+		// if err != nil {
+		// 	return
+		// }
+		// msgtype := head.GetMsgTyp()
+		// if msgtype == tcp.RouteTypRespErr {
+		// 	resperr := &msg.Error{Code: -1}
+		// 	err := proto.Unmarshal(p.GetBody(), resperr)
+		// 	if err != nil {
+		// 		return
+		// 	}
+		// 	err = resperr
+		// 	return
+		// } else if head.GetMsgTyp() == tcp.RouteTypResponse {
+		// 	gotmsgid := head.GetMsgID()
+		// 	expectmsgid := uint32(calltable.GetMessageMsgID(resp))
+		// 	if gotmsgid == expectmsgid {
+		// 		err = proto.Unmarshal(p.GetBody(), resp)
+		// 	} else {
+		// 		err = fmt.Errorf("msgid not match, expect:%v, got:%v", expectmsgid, gotmsgid)
+		// 	}
+		// } else {
+		// 	err = fmt.Errorf("unknow msgtype:%v", msgtype)
+		// }
 	})
 
 	err = c.SendPacket(packet)
@@ -161,7 +163,7 @@ func (c *TcpClient) SyncCall(target uint32, ctx context.Context, req proto.Messa
 		return err
 	case <-ctx.Done():
 		// dismiss callback
-		c.SetCallback(askid, func(c *TcpClient, packet *tcp.PackFrame) {})
+		c.SetCallback(askid, func(c *TcpClient, packet *tcp.THVPacket) {})
 		return ctx.Err()
 	}
 }
@@ -190,21 +192,22 @@ func (c *TcpClient) GetCallback(askid uint32) OnRespCBFunc {
 }
 
 func (r *TcpClient) AsyncCall(target uint32, m proto.Message) error {
-	raw, err := proto.Marshal(m)
-	if err != nil {
-		return fmt.Errorf("marshal %v failed:%v", proto.MessageName(m), err)
-	}
+	return nil
+	// raw, err := proto.Marshal(m)
+	// if err != nil {
+	// 	return fmt.Errorf("marshal %v failed:%v", proto.MessageName(m), err)
+	// }
 
-	msgid := calltable.GetMessageMsgID(m)
-	if msgid == 0 {
-		return fmt.Errorf("not found msgid:%v in msg %v", msgid, proto.MessageName(m))
-	}
+	// msgid := calltable.GetMessageMsgID(m)
+	// if msgid == 0 {
+	// 	return fmt.Errorf("not found msgid:%v in msg %v", msgid, proto.MessageName(m))
+	// }
 
-	head := tcp.NewRoutHead()
-	head.SetMsgID(uint32(msgid))
-	head.SetTargetUID(target)
-	head.SetMsgTyp(tcp.RouteTypAsync)
-	return r.SendPacket(tcp.NewPackFrame(tcp.PacketTypRoute, head, raw))
+	// head := tcp.NewRoutHead()
+	// head.SetMsgID(uint32(msgid))
+	// head.SetTargetUID(target)
+	// head.SetMsgTyp(tcp.RouteTypAsync)
+	// return r.SendPacket(tcp.NewPackFrame(tcp.PacketTypRoute, head, raw))
 }
 
 func (r *TcpClient) TargetEcho(target uint32, raw []byte, cb func(error, []byte)) {
@@ -238,21 +241,21 @@ func NewTcpClient(remoteAddr, token string) *TcpClient {
 
 	c := tcp.NewClient(&tcp.ClientOptions{
 		RemoteAddress: remoteAddr,
-		OnMessage: func(s *tcp.Socket, p *tcp.PackFrame) {
-			ptype := p.GetType()
-			if ptype == tcp.PacketTypRoute {
-				head, err := tcp.CastRoutHead(p.GetHead())
-				if err != nil {
-					fmt.Println(err)
-					return
-				}
-				if head.GetMsgTyp() == tcp.RouteTypResponse || head.GetMsgTyp() == tcp.RouteTypRespErr {
-					if cb := ret.GetCallback(head.GetAskID()); cb != nil {
-						cb(ret, p)
-					}
-				}
-			}
-			ret.OnMessageFunc(ret, p)
+		OnMessage: func(s *tcp.Socket, p *tcp.THVPacket) {
+			// ptype := p.GetType()
+			// if ptype == tcp.PacketTypRoute {
+			// 	head, err := tcp.CastRoutHead(p.GetHead())
+			// 	if err != nil {
+			// 		fmt.Println(err)
+			// 		return
+			// 	}
+			// 	if head.GetMsgTyp() == tcp.RouteTypResponse || head.GetMsgTyp() == tcp.RouteTypRespErr {
+			// 		if cb := ret.GetCallback(head.GetAskID()); cb != nil {
+			// 			cb(ret, p)
+			// 		}
+			// 	}
+			// }
+			// ret.OnMessageFunc(ret, p)
 		},
 		OnConnStat: func(s *tcp.Socket, ss tcp.SocketStat) {
 			ret.isAuth = false

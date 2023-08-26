@@ -1,7 +1,6 @@
 package tcp
 
 import (
-	"encoding/binary"
 	"errors"
 	"io"
 )
@@ -18,25 +17,18 @@ var ErrHeadSizeWrong = errors.New("packet head size error")
 var ErrParseHead = errors.New("parse packet error")
 var ErrDisconn = errors.New("socket disconnected")
 
-// -<PacketType>-|-<HeadLen>-|-<BodyLen>-|-<Head>-|-<Body>-
-// -1------------|-1---------|-3---------|--------|--------
+// -<PacketType>-|-<BodyLen>-|-<Body>-
+// -1------------|-3---------|--------
 
 type PacketType = uint8
 
 const (
 	// inner
 	PacketTypInnerStartAt_ PacketType = iota
-	PacketTypHeartbeat
 	PacketTypAck
+	PacketTypHeartbeat
+	PacketTypeEcho
 	PacketTypInnerEndAt_
-)
-
-const (
-	// user
-	PacketTypStartAt_ PacketType = 0x0f + iota
-	PacketTypRoute
-	PacketTypRouteBrige
-	PacketTypEndAt_
 )
 
 type Packet interface {
@@ -56,82 +48,62 @@ func PutUint24(b []uint8, v uint32) {
 	b[2] = uint8(v >> 16)
 }
 
-const PackMetaLen = 5
+const PackMetaLen = 4
 
-type PackMeta []uint8
+type THVPacketHead []uint8
 
-func IsValidPacketType(t uint8) bool {
-	return t > PacketTypStartAt_ && t < PacketTypEndAt_ || t > PacketTypInnerStartAt_ && t < PacketTypInnerEndAt_
-}
-
-func NewPackMeta() PackMeta {
+func NewPackMeta() THVPacketHead {
 	return make([]uint8, PackMetaLen)
 }
 
-func (hr PackMeta) GetType() uint8 {
+func (hr THVPacketHead) GetType() uint8 {
 	return hr[0]
 }
-func (hr PackMeta) GetHeadLen() uint8 {
-	return hr[1]
+
+func (hr THVPacketHead) GetBodyLen() uint32 {
+	return Uint24(hr[1:4])
 }
 
-func (hr PackMeta) GetBodyLen() uint32 {
-	return Uint24(hr[2:5])
-}
-
-func (hr PackMeta) SetType(t uint8) {
+func (hr THVPacketHead) SetType(t uint8) {
 	hr[0] = t
 }
 
-func (hr PackMeta) SetHeadLen(t uint8) {
-	hr[1] = t
+func (hr THVPacketHead) SetBodyLen(l uint32) {
+	PutUint24(hr[1:4], l)
 }
 
-func (hr PackMeta) SetBodyLen(l uint32) {
-	PutUint24(hr[2:5], l)
-}
-
-func (hr PackMeta) Reset() {
+func (hr THVPacketHead) Reset() {
 	for i := 0; i < len(hr); i++ {
 		hr[i] = 0
 	}
 }
 
-func NewEmptyPackFrame() *PackFrame {
-	return &PackFrame{
-		meta: NewPackMeta(),
+func NewEmptyTHVPacket() *THVPacket {
+	return &THVPacket{
+		head: NewPackMeta(),
 	}
 }
 
-func NewPackFrame(t uint8, h []uint8, b []uint8) *PackFrame {
-	p := NewEmptyPackFrame()
+func NewPackFrame(t uint8, b []uint8) *THVPacket {
+	p := NewEmptyTHVPacket()
 	p.SetType(t)
-	p.SetHead(h)
 	p.SetBody(b)
 	return p
 }
 
-type PackFrame struct {
-	meta PackMeta
-	head []uint8
+type THVPacket struct {
+	head THVPacketHead
 	body []uint8
 }
 
-func (p *PackFrame) ReadFrom(reader io.Reader) (int64, error) {
+func (p *THVPacket) ReadFrom(reader io.Reader) (int64, error) {
 	var err error
-	metalen, err := io.ReadFull(reader, p.meta)
+	metalen, err := io.ReadFull(reader, p.head)
 	if err != nil {
 		return 0, err
 	}
-	headlen := p.meta.GetHeadLen()
-	if headlen > 0 {
-		p.head = make([]byte, headlen)
-		_, err = io.ReadFull(reader, p.head)
-		if err != nil {
-			return 0, err
-		}
-	}
-	bodylen := p.meta.GetBodyLen()
+
+	bodylen := p.head.GetBodyLen()
 	if bodylen > 0 {
 		p.body = make([]byte, bodylen)
 		_, err = io.ReadFull(reader, p.body)
@@ -139,19 +111,13 @@ func (p *PackFrame) ReadFrom(reader io.Reader) (int64, error) {
 			return 0, err
 		}
 	}
-	return int64(metalen + int(headlen) + int(bodylen)), nil
+	return int64(metalen + int(bodylen)), nil
 }
 
-func (p *PackFrame) WriteTo(writer io.Writer) (int64, error) {
+func (p *THVPacket) WriteTo(writer io.Writer) (int64, error) {
 	ret := int64(0)
 
-	n, err := writer.Write(p.meta)
-	ret += int64(n)
-	if err != nil {
-		return ret, err
-	}
-
-	n, err = writer.Write(p.head)
+	n, err := writer.Write(p.head)
 	ret += int64(n)
 	if err != nil {
 		return ret, err
@@ -167,109 +133,34 @@ func (p *PackFrame) WriteTo(writer io.Writer) (int64, error) {
 	return ret, nil
 }
 
-func (p *PackFrame) Name() string {
+func (p *THVPacket) Name() string {
 	return "tcp-binary"
 }
 
-func (p *PackFrame) Reset() {
-	p.meta.Reset()
+func (p *THVPacket) Reset() {
+	p.head.Reset()
 	p.body = p.body[:0]
 }
 
-func (p *PackFrame) Clone() *PackFrame {
-	return &PackFrame{
-		meta: p.meta[:],
+func (p *THVPacket) Clone() *THVPacket {
+	return &THVPacket{
 		head: p.head[:],
 		body: p.body[:],
 	}
 }
 
-func (p *PackFrame) SetType(t uint8) {
-	p.meta.SetType(t)
+func (p *THVPacket) SetType(t uint8) {
+	p.head.SetType(t)
 }
-func (p *PackFrame) GetType() uint8 {
-	return p.meta.GetType()
-}
-
-func (p *PackFrame) SetHead(h []uint8) {
-	p.head = h
-	p.meta.SetHeadLen(uint8(len(h)))
+func (p *THVPacket) GetType() uint8 {
+	return p.head.GetType()
 }
 
-func (p *PackFrame) SetBody(b []uint8) {
+func (p *THVPacket) SetBody(b []uint8) {
 	p.body = b
-	p.meta.SetBodyLen(uint32(len(b)))
+	p.head.SetBodyLen(uint32(len(b)))
 }
 
-func (p *PackFrame) GetHead() []uint8 {
-	return p.head
-}
-func (p *PackFrame) GetBody() []uint8 {
+func (p *THVPacket) GetBody() []uint8 {
 	return p.body
 }
-
-type RouteHead []uint8
-
-const RouteHeadLen = 17
-
-type RouteMsgTyp uint8
-
-const (
-	RouteTypAsync RouteMsgTyp = iota
-	RouteTypRequest
-	RouteTypResponse
-	RouteTypRespErr
-)
-
-func CastRoutHead(head []uint8) (RouteHead, error) {
-	if len(head) != RouteHeadLen {
-		return nil, ErrHeadSizeWrong
-	}
-	return RouteHead(head), nil
-}
-
-func NewRoutHead() RouteHead {
-	return make([]uint8, RouteHeadLen)
-}
-
-func (h RouteHead) GetTargetUID() uint32 {
-	return binary.LittleEndian.Uint32(h[0:4])
-}
-
-func (h RouteHead) GetSrouceUID() uint32 {
-	return binary.LittleEndian.Uint32(h[4:8])
-}
-
-func (h RouteHead) GetAskID() uint32 {
-	return binary.LittleEndian.Uint32(h[8:12])
-}
-
-func (h RouteHead) GetMsgID() uint32 {
-	return binary.LittleEndian.Uint32(h[12:16])
-}
-
-func (h RouteHead) GetMsgTyp() RouteMsgTyp {
-	return RouteMsgTyp(h[16])
-}
-
-func (h RouteHead) SetTargetUID(u uint32) {
-	binary.LittleEndian.PutUint32(h[0:4], u)
-}
-
-func (h RouteHead) SetSrouceUID(u uint32) {
-	binary.LittleEndian.PutUint32(h[4:8], u)
-}
-
-func (h RouteHead) SetAskID(id uint32) {
-	binary.LittleEndian.PutUint32(h[8:12], id)
-}
-
-func (h RouteHead) SetMsgID(id uint32) {
-	binary.LittleEndian.PutUint32(h[12:16], id)
-}
-
-func (h RouteHead) SetMsgTyp(typ RouteMsgTyp) {
-	h[16] = uint8(typ)
-}
-
-type RouteErrHead RouteHead

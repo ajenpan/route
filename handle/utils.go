@@ -41,8 +41,8 @@ func GetSocketFromCtx(ctx context.Context) *tcp.Socket {
 	return nil
 }
 
-func GetPacketFromCtx(ctx context.Context) *tcp.PackFrame {
-	if v, ok := ctx.Value(tcpPacketKey).(*tcp.PackFrame); ok {
+func GetPacketFromCtx(ctx context.Context) *tcp.THVPacket {
+	if v, ok := ctx.Value(tcpPacketKey).(*tcp.THVPacket); ok {
 		return v
 	}
 	return nil

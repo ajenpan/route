@@ -28,14 +28,21 @@ type ServerOptions struct {
 
 type ServerOption func(*ServerOptions)
 
-func NewServer(opts ServerOptions) *Server {
+func NewServer(opts ServerOptions) (*Server, error) {
 	ret := &Server{
 		opts:    opts,
 		sockets: make(map[string]*Socket),
 		die:     make(chan bool),
 	}
+	listener, err := net.Listen("tcp", opts.Address)
+	if err != nil {
+		return nil, err
+	}
+
+	ret.listener = listener
+
 	if ret.opts.OnMessage == nil {
-		ret.opts.OnMessage = func(s *Socket, p *PackFrame) {}
+		ret.opts.OnMessage = func(s *Socket, p *THVPacket) {}
 	}
 	if ret.opts.OnConn == nil {
 		ret.opts.OnConn = func(s *Socket, stat SocketStat) {}
@@ -46,7 +53,7 @@ func NewServer(opts ServerOptions) *Server {
 	if ret.opts.NewIDFunc == nil {
 		ret.opts.NewIDFunc = nextID
 	}
-	return ret
+	return ret, nil
 }
 
 type Server struct {
@@ -65,53 +72,43 @@ func (s *Server) Stop() error {
 		close(s.die)
 	}
 	s.wgConns.Wait()
+	s.listener.Close()
 	return nil
 }
 
 func (s *Server) Start() error {
-	s.die = make(chan bool)
-	listener, err := net.Listen("tcp", s.opts.Address)
-	if err != nil {
-		return err
-	}
-	s.listener = listener
-
-	go func() {
-		defer listener.Close()
-		var tempDelay time.Duration = 0
-		for {
-			select {
-			case <-s.die:
-				return
-			default:
-				conn, err := listener.Accept()
-				if err != nil {
-					if ne, ok := err.(net.Error); ok && ne.Timeout() {
-						if tempDelay == 0 {
-							tempDelay = 5 * time.Millisecond
-						} else {
-							tempDelay *= 2
-						}
-						if max := 1 * time.Second; tempDelay > max {
-							tempDelay = max
-						}
-						time.Sleep(tempDelay)
-						continue
+	var tempDelay time.Duration = 0
+	for {
+		select {
+		case <-s.die:
+			return nil
+		default:
+			conn, err := s.listener.Accept()
+			if err != nil {
+				if ne, ok := err.(net.Error); ok && ne.Timeout() {
+					if tempDelay == 0 {
+						tempDelay = 5 * time.Millisecond
+					} else {
+						tempDelay *= 2
 					}
-					return
+					if max := 1 * time.Second; tempDelay > max {
+						tempDelay = max
+					}
+					time.Sleep(tempDelay)
+					continue
 				}
-				tempDelay = 0
-
-				socket := NewSocket(conn, SocketOptions{
-					ID:      s.opts.NewIDFunc(),
-					Timeout: s.opts.HeatbeatInterval,
-				})
-
-				go s.accept(socket)
+				return err
 			}
+			tempDelay = 0
+
+			socket := NewSocket(conn, SocketOptions{
+				ID:      s.opts.NewIDFunc(),
+				Timeout: s.opts.HeatbeatInterval,
+			})
+
+			go s.accept(socket)
 		}
-	}()
-	return nil
+	}
 }
 
 func (n *Server) accept(socket *Socket) {
@@ -120,7 +117,7 @@ func (n *Server) accept(socket *Socket) {
 	defer socket.Close()
 
 	//read ack
-	ack := NewEmptyPackFrame()
+	ack := NewEmptyTHVPacket()
 	if err := socket.readPacket(ack); err != nil {
 		return
 	}
@@ -148,7 +145,7 @@ func (n *Server) accept(socket *Socket) {
 	var socketErr error = nil
 
 	for {
-		p := NewEmptyPackFrame()
+		p := NewEmptyTHVPacket()
 		socketErr = socket.readPacket(p)
 		if socketErr != nil {
 			break
@@ -156,12 +153,15 @@ func (n *Server) accept(socket *Socket) {
 
 		typ := p.GetType()
 
-		if typ > PacketTypStartAt_ && typ < PacketTypEndAt_ {
-			n.opts.OnMessage(socket, p)
-		} else if typ > PacketTypHeartbeat && typ < PacketTypInnerEndAt_ {
-			//do nothing
+		if typ > PacketTypHeartbeat && typ < PacketTypInnerEndAt_ {
+			switch typ {
+			case PacketTypeEcho:
+				socket.SendPacket(p)
+			}
 		} else {
-			break
+			if n.opts.OnMessage != nil {
+				n.opts.OnMessage(socket, p)
+			}
 		}
 	}
 }

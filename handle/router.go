@@ -59,7 +59,7 @@ type tcpPacketKeyT struct{}
 var tcpSocketKey = tcpSocketKeyT{}
 var tcpPacketKey = tcpPacketKeyT{}
 
-func (r *Router) OnMessage(s *tcp.Socket, p *tcp.PackFrame) {
+func (r *Router) OnMessage(s *tcp.Socket, p *tcp.THVPacket) {
 	var err error
 	defer func() {
 		if err != nil {
@@ -69,11 +69,11 @@ func (r *Router) OnMessage(s *tcp.Socket, p *tcp.PackFrame) {
 
 	ptype := p.GetType()
 
-	if ptype == tcp.PacketTypRoute {
+	if ptype == PacketTypRoute {
 
-		var head tcp.RouteHead
+		var head RouteHead
 
-		head, err = tcp.CastRoutHead(p.GetHead())
+		head, err = CastRoutHead(p.GetBody())
 		if err != nil {
 			return
 		}
@@ -170,7 +170,7 @@ func (r *Router) PublishEvent(event proto.Message) {
 	log.Printf("[Mock PublishEvent] name:%v, msg:%v\n", string(proto.MessageName(event).Name()), event)
 }
 
-func (r *Router) SendMessage(s *tcp.Socket, askid uint32, msgtyp tcp.RouteMsgTyp, m proto.Message) error {
+func (r *Router) SendMessage(s *tcp.Socket, askid uint32, msgtyp RouteMsgTyp, m proto.Message) error {
 	raw, err := proto.Marshal(m)
 	if err != nil {
 		return fmt.Errorf("marshal failed:%v", err)
@@ -181,17 +181,18 @@ func (r *Router) SendMessage(s *tcp.Socket, askid uint32, msgtyp tcp.RouteMsgTyp
 		return fmt.Errorf("not found msgid:%v", msgid)
 	}
 
-	head := tcp.NewRoutHead()
-	head.SetMsgID(uint32(msgid))
-	head.SetSrouceUID(0)
-	head.SetTargetUID(s.UID())
-	head.SetAskID(askid)
-	head.SetMsgTyp(msgtyp)
+	return s.SendPacket(tcp.NewPackFrame(PacketTypRoute, raw))
+	// head := tcp.NewRoutHead()
+	// head.SetMsgID(uint32(msgid))
+	// head.SetSrouceUID(0)
+	// head.SetTargetUID(s.UID())
+	// head.SetAskID(askid)
+	// head.SetMsgTyp(msgtyp)
 
-	return s.SendPacket(tcp.NewPackFrame(tcp.PacketTypRoute, head, raw))
+	// return s.SendPacket(tcp.NewPackFrame(tcp.PacketTypRoute, head, raw))
 }
 
-func (r *Router) OnCall(s *tcp.Socket, p *tcp.PackFrame, head tcp.RouteHead, body []byte) {
+func (r *Router) OnCall(s *tcp.Socket, p *tcp.THVPacket, head RouteHead, body []byte) {
 	var err error
 
 	msgid := int(head.GetMsgID())
@@ -239,9 +240,9 @@ func (r *Router) OnCall(s *tcp.Socket, p *tcp.PackFrame, head tcp.RouteHead, bod
 		var senderr error
 		switch resperr := resperrI.(type) {
 		case *msg.Error:
-			senderr = r.SendMessage(s, askid, tcp.RouteTypRespErr, resperr)
+			senderr = r.SendMessage(s, askid, RouteTypRespErr, resperr)
 		case error:
-			senderr = r.SendMessage(s, askid, tcp.RouteTypRespErr, &msg.Error{
+			senderr = r.SendMessage(s, askid, RouteTypRespErr, &msg.Error{
 				Code:   -1,
 				Detail: resperr.Error(),
 			})
@@ -261,8 +262,8 @@ func (r *Router) OnCall(s *tcp.Socket, p *tcp.PackFrame, head tcp.RouteHead, bod
 			return
 		}
 		respMsgTyp := head.GetMsgTyp()
-		if respMsgTyp == tcp.RouteTypRequest {
-			respMsgTyp = tcp.RouteTypResponse
+		if respMsgTyp == RouteTypRequest {
+			respMsgTyp = RouteTypResponse
 		}
 
 		r.SendMessage(s, askid, respMsgTyp, resp)

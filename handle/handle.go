@@ -4,7 +4,6 @@ import (
 	"context"
 
 	msg "route/proto"
-	"route/transport/tcp"
 )
 
 func (r *Router) OnLoginRequest(ctx context.Context, req *msg.LoginRequest) (*msg.LoginResponse, error) {
@@ -37,32 +36,32 @@ func (r *Router) OnListGroupRequest(ctx context.Context, req *msg.ListGroupReque
 }
 
 func (r *Router) OnGroupBroadcastRequest(ctx context.Context, req *msg.GroupBroadcastRequest) (*msg.GroupBroadcastResponse, error) {
-	ss := GetSocketFromCtx(ctx)
-	ssuid := ss.UID()
+	// ss := GetSocketFromCtx(ctx)
+	// ssuid := ss.UID()
 
-	head := tcp.NewRoutHead()
-	head.SetMsgID(req.Msgid)
-	head.SetSrouceUID(ss.UID())
-	head.SetTargetUID(0)
-	p := tcp.NewPackFrame(tcp.PacketTypRoute, head, req.Msgdata)
+	// head := tcp.NewRoutHead()
+	// head.SetMsgID(req.Msgid)
+	// head.SetSrouceUID(ss.UID())
+	// head.SetTargetUID(0)
+	// p := tcp.NewPackFrame(tcp.PacketTypRoute, head, req.Msgdata)
 
-	resp := &msg.GroupBroadcastResponse{}
+	// resp := &msg.GroupBroadcastResponse{}
 
-	g := r.gm.GetGroup(req.Group)
-	if g == nil {
-		return resp, nil
-	}
+	// g := r.gm.GetGroup(req.Group)
+	// if g == nil {
+	// 	return resp, nil
+	// }
 
-	sockets := g.GetAll()
-	for _, s := range sockets {
-		if s.UID() == ssuid {
-			continue
-		}
-		if s.SendPacket(p) == nil {
-			resp.RecvCount++
-		}
-	}
-	return resp, nil
+	// sockets := g.GetAll()
+	// for _, s := range sockets {
+	// 	if s.UID() == ssuid {
+	// 		continue
+	// 	}
+	// 	if s.SendPacket(p) == nil {
+	// 		resp.RecvCount++
+	// 	}
+	// }
+	return nil, nil
 }
 
 func (r *Router) OnPutInGroupRequest(ctx context.Context, req *msg.PutInGroupRequest) (*msg.PutInGroupResponse, error) {

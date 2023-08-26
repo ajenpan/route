@@ -9,7 +9,6 @@ import (
 
 	"route/auth"
 	"route/client"
-	msg "route/proto"
 	"route/transport/tcp"
 	"route/utils/rsagen"
 	"route/utils/signal"
@@ -63,24 +62,24 @@ func StartClient() {
 		panic(err)
 	}
 	c := client.NewTcpClient("localhost:14321", jwtstr)
-	c.OnMessageFunc = func(c *client.TcpClient, p *tcp.PackFrame) {
-		ptype := p.GetType()
-		if ptype == tcp.PacketTypRoute {
-			head, err := tcp.CastRoutHead(p.GetHead())
-			if err != nil {
-				log.Println(err)
-				return
-			}
-			msgtype := head.GetMsgTyp()
-			msgid := head.GetMsgID()
+	c.OnMessageFunc = func(c *client.TcpClient, p *tcp.THVPacket) {
+		// ptype := p.GetType()
+		// if ptype == PacketTypRoute {
+		// 	head, err := tcp.CastRoutHead(p.GetBody())
+		// 	if err != nil {
+		// 		log.Println(err)
+		// 		return
+		// 	}
+		// 	msgtype := head.GetMsgTyp()
+		// 	msgid := head.GetMsgID()
 
-			if msgtype == tcp.RouteTypRequest && msgid == uint32(msg.Echo_ID) {
-				head.SetMsgTyp(tcp.RouteTypResponse)
-				head.SetTargetUID(head.GetSrouceUID())
-				c.SendPacket(p)
-				return
-			}
-		}
+		// 	if msgtype == hand.RouteTypRequest && msgid == uint32(msg.Echo_ID) {
+		// 		head.SetMsgTyp(tcp.RouteTypResponse)
+		// 		head.SetTargetUID(head.GetSrouceUID())
+		// 		c.SendPacket(p)
+		// 		return
+		// 	}
+		// }
 	}
 	c.OnLoginFunc = func(c *client.TcpClient, stat client.LoginStat) {
 		log.Println("login stat:", stat)

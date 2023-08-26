@@ -62,18 +62,19 @@ func StartServer(listenAt string) {
 	h.Authc = &auth.LocalAuth{
 		PK: pk,
 	}
-	svr := tcp.NewServer(tcp.ServerOptions{
+	svr, err := tcp.NewServer(tcp.ServerOptions{
 		Address:   listenAt,
 		OnMessage: h.OnMessage,
 		OnConn:    h.OnConn,
 	})
-
-	err = svr.Start()
 	if err != nil {
 		panic(err)
 	}
 
+	defer svr.Stop()
 	fmt.Println("server started,listening on", svr.Address())
+	go svr.Start()
+
 	signal.WaitShutdown()
 }
 
