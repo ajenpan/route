@@ -8,7 +8,10 @@ import (
 // Codec constants.
 const (
 	//8MB 8388607
-	MaxPacketSize = 0x7FFFFF
+	MaxPacketBodySize = 0x7FFFFF
+
+	//255
+	MaxPacketHeadSize = 0xFF
 )
 
 var ErrWrongPacketType = errors.New("wrong packet type")
@@ -17,18 +20,20 @@ var ErrHeadSizeWrong = errors.New("packet head size error")
 var ErrParseHead = errors.New("parse packet error")
 var ErrDisconn = errors.New("socket disconnected")
 
-// -<PacketType>-|-<BodyLen>-|-<Body>-
-// -1------------|-3---------|--------
+// |-Meta---------------------------------|-Body------------|
+// |-<PacketType>-|-<HeadLen>-|-<BodyLen>-|-<Head>-|-<Body>-|
+// |-1------------|-1---------|-3---------|--------|--------|
 
 type PacketType = uint8
 
 const (
 	// inner
-	PacketTypInnerStartAt_ PacketType = iota
-	PacketTypAck
-	PacketTypHeartbeat
+	PacketTypeInnerStartAt_ PacketType = iota
+	PacketTypeAck
+	PacketTypeHeartbeat
 	PacketTypeEcho
-	PacketTypInnerEndAt_
+	PacketTypeAuth
+	PacketTypeInnerEndAt_
 )
 
 type Packet interface {
@@ -36,7 +41,7 @@ type Packet interface {
 	io.WriterTo
 }
 
-func Uint24(b []uint8) uint32 {
+func GetUint24(b []uint8) uint32 {
 	_ = b[2] // bounds check hint to compiler; see golang.org/issue/14808
 	return uint32(b[0]) | uint32(b[1])<<8 | uint32(b[2])<<16
 }
@@ -48,31 +53,39 @@ func PutUint24(b []uint8, v uint32) {
 	b[2] = uint8(v >> 16)
 }
 
-const PackMetaLen = 4
+const PackMetaLen = 5
 
-type THVPacketHead []uint8
+type THVPacketMeta []uint8
 
-func NewPackMeta() THVPacketHead {
+func NewPackMeta() THVPacketMeta {
 	return make([]uint8, PackMetaLen)
 }
 
-func (hr THVPacketHead) GetType() uint8 {
+func (hr THVPacketMeta) GetType() uint8 {
 	return hr[0]
 }
 
-func (hr THVPacketHead) GetBodyLen() uint32 {
-	return Uint24(hr[1:4])
+func (h THVPacketMeta) GetHeadLen() uint8 {
+	return h[1]
 }
 
-func (hr THVPacketHead) SetType(t uint8) {
+func (hr THVPacketMeta) GetBodyLen() uint32 {
+	return GetUint24(hr[2:5])
+}
+
+func (hr THVPacketMeta) SetType(t uint8) {
 	hr[0] = t
 }
 
-func (hr THVPacketHead) SetBodyLen(l uint32) {
-	PutUint24(hr[1:4], l)
+func (h THVPacketMeta) SetHeadLen(t uint8) {
+	h[1] = t
 }
 
-func (hr THVPacketHead) Reset() {
+func (hr THVPacketMeta) SetBodyLen(l uint32) {
+	PutUint24(hr[2:5], l)
+}
+
+func (hr THVPacketMeta) Reset() {
 	for i := 0; i < len(hr); i++ {
 		hr[i] = 0
 	}
@@ -80,54 +93,70 @@ func (hr THVPacketHead) Reset() {
 
 func NewEmptyTHVPacket() *THVPacket {
 	return &THVPacket{
-		head: NewPackMeta(),
+		Meta: NewPackMeta(),
 	}
 }
 
-func NewPackFrame(t uint8, b []uint8) *THVPacket {
+func NewPackFrame(t uint8, h []uint8, b []uint8) *THVPacket {
 	p := NewEmptyTHVPacket()
 	p.SetType(t)
+	p.SetHead(h)
 	p.SetBody(b)
 	return p
 }
 
 type THVPacket struct {
-	head THVPacketHead
-	body []uint8
+	Meta THVPacketMeta
+	Head []uint8
+	Body []uint8
 }
 
 func (p *THVPacket) ReadFrom(reader io.Reader) (int64, error) {
 	var err error
-	metalen, err := io.ReadFull(reader, p.head)
+	metalen, err := io.ReadFull(reader, p.Meta)
 	if err != nil {
 		return 0, err
 	}
 
-	bodylen := p.head.GetBodyLen()
-	if bodylen > 0 {
-		p.body = make([]byte, bodylen)
-		_, err = io.ReadFull(reader, p.body)
+	headlen := p.Meta.GetHeadLen()
+	if headlen > 0 {
+		p.Head = make([]uint8, headlen)
+		_, err = io.ReadFull(reader, p.Body)
 		if err != nil {
 			return 0, err
 		}
 	}
-	return int64(metalen + int(bodylen)), nil
+
+	bodylen := p.Meta.GetBodyLen()
+	if bodylen > 0 {
+		p.Body = make([]uint8, bodylen)
+		_, err = io.ReadFull(reader, p.Body)
+		if err != nil {
+			return 0, err
+		}
+	}
+	return int64(metalen + int(headlen) + int(bodylen)), nil
 }
 
 func (p *THVPacket) WriteTo(writer io.Writer) (int64, error) {
 	ret := int64(0)
-
-	n, err := writer.Write(p.head)
+	n, err := writer.Write(p.Meta)
 	ret += int64(n)
 	if err != nil {
-		return ret, err
+		return -1, err
 	}
-
-	if len(p.body) > 0 {
-		n, err = writer.Write(p.body)
+	if len(p.Head) > 0 {
+		n, err = writer.Write(p.Body)
 		ret += int64(n)
 		if err != nil {
-			return ret, err
+			return -1, err
+		}
+	}
+	if len(p.Body) > 0 {
+		n, err = writer.Write(p.Body)
+		ret += int64(n)
+		if err != nil {
+			return -1, err
 		}
 	}
 	return ret, nil
@@ -138,29 +167,60 @@ func (p *THVPacket) Name() string {
 }
 
 func (p *THVPacket) Reset() {
-	p.head.Reset()
-	p.body = p.body[:0]
-}
-
-func (p *THVPacket) Clone() *THVPacket {
-	return &THVPacket{
-		head: p.head[:],
-		body: p.body[:],
+	p.Meta.Reset()
+	if p.Head != nil {
+		p.Head = p.Head[:0]
+	}
+	if p.Body != nil {
+		p.Body = p.Body[:0]
 	}
 }
 
-func (p *THVPacket) SetType(t uint8) {
-	p.head.SetType(t)
+func (p *THVPacket) Clone() *THVPacket {
+	ret := &THVPacket{
+		Meta: p.Meta[:],
+	}
+	if p.Head != nil {
+		ret.Head = p.Head[:]
+	}
+	if p.Body != nil {
+		ret.Body = p.Body[:]
+	}
+	return ret
 }
+
+func (p *THVPacket) SetType(t uint8) {
+	p.Meta.SetType(t)
+}
+
 func (p *THVPacket) GetType() uint8 {
-	return p.head.GetType()
+	return p.Meta.GetType()
+}
+
+func (p *THVPacket) SetHead(b []uint8) {
+	if len(b) > MaxPacketHeadSize {
+		panic(ErrHeadSizeWrong)
+	}
+	p.Head = b
+	p.Meta.SetHeadLen(uint8(len(b)))
+}
+
+func (p *THVPacket) GetHead() []uint8 {
+	return p.Head
 }
 
 func (p *THVPacket) SetBody(b []uint8) {
-	p.body = b
-	p.head.SetBodyLen(uint32(len(b)))
+	if len(b) > MaxPacketBodySize {
+		panic(ErrBodySizeWrong)
+	}
+	p.Body = b
+	p.Meta.SetBodyLen(uint32(len(b)))
 }
 
 func (p *THVPacket) GetBody() []uint8 {
-	return p.body
+	return p.Body
+}
+
+func (p *THVPacket) GetMeta() THVPacketMeta {
+	return p.Meta
 }

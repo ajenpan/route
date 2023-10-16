@@ -112,288 +112,6 @@ func (Echo_MSGID) EnumDescriptor() ([]byte, []int) {
 	return file_proto_route_proto_rawDescGZIP(), []int{6, 0}
 }
 
-type LoginRequest_MSGID int32
-
-const (
-	LoginRequest_INVALID_MSGID LoginRequest_MSGID = 0
-	LoginRequest_ID            LoginRequest_MSGID = 100
-)
-
-// Enum value maps for LoginRequest_MSGID.
-var (
-	LoginRequest_MSGID_name = map[int32]string{
-		0:   "INVALID_MSGID",
-		100: "ID",
-	}
-	LoginRequest_MSGID_value = map[string]int32{
-		"INVALID_MSGID": 0,
-		"ID":            100,
-	}
-)
-
-func (x LoginRequest_MSGID) Enum() *LoginRequest_MSGID {
-	p := new(LoginRequest_MSGID)
-	*p = x
-	return p
-}
-
-func (x LoginRequest_MSGID) String() string {
-	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
-}
-
-func (LoginRequest_MSGID) Descriptor() protoreflect.EnumDescriptor {
-	return file_proto_route_proto_enumTypes[2].Descriptor()
-}
-
-func (LoginRequest_MSGID) Type() protoreflect.EnumType {
-	return &file_proto_route_proto_enumTypes[2]
-}
-
-func (x LoginRequest_MSGID) Number() protoreflect.EnumNumber {
-	return protoreflect.EnumNumber(x)
-}
-
-// Deprecated: Use LoginRequest_MSGID.Descriptor instead.
-func (LoginRequest_MSGID) EnumDescriptor() ([]byte, []int) {
-	return file_proto_route_proto_rawDescGZIP(), []int{7, 0}
-}
-
-type LoginResponse_MSGID int32
-
-const (
-	LoginResponse_INVALID_MSGID LoginResponse_MSGID = 0
-	LoginResponse_ID            LoginResponse_MSGID = 101
-)
-
-// Enum value maps for LoginResponse_MSGID.
-var (
-	LoginResponse_MSGID_name = map[int32]string{
-		0:   "INVALID_MSGID",
-		101: "ID",
-	}
-	LoginResponse_MSGID_value = map[string]int32{
-		"INVALID_MSGID": 0,
-		"ID":            101,
-	}
-)
-
-func (x LoginResponse_MSGID) Enum() *LoginResponse_MSGID {
-	p := new(LoginResponse_MSGID)
-	*p = x
-	return p
-}
-
-func (x LoginResponse_MSGID) String() string {
-	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
-}
-
-func (LoginResponse_MSGID) Descriptor() protoreflect.EnumDescriptor {
-	return file_proto_route_proto_enumTypes[3].Descriptor()
-}
-
-func (LoginResponse_MSGID) Type() protoreflect.EnumType {
-	return &file_proto_route_proto_enumTypes[3]
-}
-
-func (x LoginResponse_MSGID) Number() protoreflect.EnumNumber {
-	return protoreflect.EnumNumber(x)
-}
-
-// Deprecated: Use LoginResponse_MSGID.Descriptor instead.
-func (LoginResponse_MSGID) EnumDescriptor() ([]byte, []int) {
-	return file_proto_route_proto_rawDescGZIP(), []int{8, 0}
-}
-
-type LoginResponse_ErrCode int32
-
-const (
-	LoginResponse_ok            LoginResponse_ErrCode = 0
-	LoginResponse_unkown_err    LoginResponse_ErrCode = 1
-	LoginResponse_invalid_token LoginResponse_ErrCode = 11
-)
-
-// Enum value maps for LoginResponse_ErrCode.
-var (
-	LoginResponse_ErrCode_name = map[int32]string{
-		0:  "ok",
-		1:  "unkown_err",
-		11: "invalid_token",
-	}
-	LoginResponse_ErrCode_value = map[string]int32{
-		"ok":            0,
-		"unkown_err":    1,
-		"invalid_token": 11,
-	}
-)
-
-func (x LoginResponse_ErrCode) Enum() *LoginResponse_ErrCode {
-	p := new(LoginResponse_ErrCode)
-	*p = x
-	return p
-}
-
-func (x LoginResponse_ErrCode) String() string {
-	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
-}
-
-func (LoginResponse_ErrCode) Descriptor() protoreflect.EnumDescriptor {
-	return file_proto_route_proto_enumTypes[4].Descriptor()
-}
-
-func (LoginResponse_ErrCode) Type() protoreflect.EnumType {
-	return &file_proto_route_proto_enumTypes[4]
-}
-
-func (x LoginResponse_ErrCode) Number() protoreflect.EnumNumber {
-	return protoreflect.EnumNumber(x)
-}
-
-// Deprecated: Use LoginResponse_ErrCode.Descriptor instead.
-func (LoginResponse_ErrCode) EnumDescriptor() ([]byte, []int) {
-	return file_proto_route_proto_rawDescGZIP(), []int{8, 1}
-}
-
-type AccountLoginRequest_MSGID int32
-
-const (
-	AccountLoginRequest_INVALID_MSGID AccountLoginRequest_MSGID = 0
-	AccountLoginRequest_ID            AccountLoginRequest_MSGID = 102
-)
-
-// Enum value maps for AccountLoginRequest_MSGID.
-var (
-	AccountLoginRequest_MSGID_name = map[int32]string{
-		0:   "INVALID_MSGID",
-		102: "ID",
-	}
-	AccountLoginRequest_MSGID_value = map[string]int32{
-		"INVALID_MSGID": 0,
-		"ID":            102,
-	}
-)
-
-func (x AccountLoginRequest_MSGID) Enum() *AccountLoginRequest_MSGID {
-	p := new(AccountLoginRequest_MSGID)
-	*p = x
-	return p
-}
-
-func (x AccountLoginRequest_MSGID) String() string {
-	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
-}
-
-func (AccountLoginRequest_MSGID) Descriptor() protoreflect.EnumDescriptor {
-	return file_proto_route_proto_enumTypes[5].Descriptor()
-}
-
-func (AccountLoginRequest_MSGID) Type() protoreflect.EnumType {
-	return &file_proto_route_proto_enumTypes[5]
-}
-
-func (x AccountLoginRequest_MSGID) Number() protoreflect.EnumNumber {
-	return protoreflect.EnumNumber(x)
-}
-
-// Deprecated: Use AccountLoginRequest_MSGID.Descriptor instead.
-func (AccountLoginRequest_MSGID) EnumDescriptor() ([]byte, []int) {
-	return file_proto_route_proto_rawDescGZIP(), []int{9, 0}
-}
-
-type AccountLoginResponse_MSGID int32
-
-const (
-	AccountLoginResponse_INVALID_MSGID AccountLoginResponse_MSGID = 0
-	AccountLoginResponse_ID            AccountLoginResponse_MSGID = 103
-)
-
-// Enum value maps for AccountLoginResponse_MSGID.
-var (
-	AccountLoginResponse_MSGID_name = map[int32]string{
-		0:   "INVALID_MSGID",
-		103: "ID",
-	}
-	AccountLoginResponse_MSGID_value = map[string]int32{
-		"INVALID_MSGID": 0,
-		"ID":            103,
-	}
-)
-
-func (x AccountLoginResponse_MSGID) Enum() *AccountLoginResponse_MSGID {
-	p := new(AccountLoginResponse_MSGID)
-	*p = x
-	return p
-}
-
-func (x AccountLoginResponse_MSGID) String() string {
-	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
-}
-
-func (AccountLoginResponse_MSGID) Descriptor() protoreflect.EnumDescriptor {
-	return file_proto_route_proto_enumTypes[6].Descriptor()
-}
-
-func (AccountLoginResponse_MSGID) Type() protoreflect.EnumType {
-	return &file_proto_route_proto_enumTypes[6]
-}
-
-func (x AccountLoginResponse_MSGID) Number() protoreflect.EnumNumber {
-	return protoreflect.EnumNumber(x)
-}
-
-// Deprecated: Use AccountLoginResponse_MSGID.Descriptor instead.
-func (AccountLoginResponse_MSGID) EnumDescriptor() ([]byte, []int) {
-	return file_proto_route_proto_rawDescGZIP(), []int{10, 0}
-}
-
-type AccountLoginResponse_ErrCode int32
-
-const (
-	AccountLoginResponse_ok          AccountLoginResponse_ErrCode = 0
-	AccountLoginResponse_unkown_err  AccountLoginResponse_ErrCode = 1
-	AccountLoginResponse_invalid_pwd AccountLoginResponse_ErrCode = 11
-)
-
-// Enum value maps for AccountLoginResponse_ErrCode.
-var (
-	AccountLoginResponse_ErrCode_name = map[int32]string{
-		0:  "ok",
-		1:  "unkown_err",
-		11: "invalid_pwd",
-	}
-	AccountLoginResponse_ErrCode_value = map[string]int32{
-		"ok":          0,
-		"unkown_err":  1,
-		"invalid_pwd": 11,
-	}
-)
-
-func (x AccountLoginResponse_ErrCode) Enum() *AccountLoginResponse_ErrCode {
-	p := new(AccountLoginResponse_ErrCode)
-	*p = x
-	return p
-}
-
-func (x AccountLoginResponse_ErrCode) String() string {
-	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
-}
-
-func (AccountLoginResponse_ErrCode) Descriptor() protoreflect.EnumDescriptor {
-	return file_proto_route_proto_enumTypes[7].Descriptor()
-}
-
-func (AccountLoginResponse_ErrCode) Type() protoreflect.EnumType {
-	return &file_proto_route_proto_enumTypes[7]
-}
-
-func (x AccountLoginResponse_ErrCode) Number() protoreflect.EnumNumber {
-	return protoreflect.EnumNumber(x)
-}
-
-// Deprecated: Use AccountLoginResponse_ErrCode.Descriptor instead.
-func (AccountLoginResponse_ErrCode) EnumDescriptor() ([]byte, []int) {
-	return file_proto_route_proto_rawDescGZIP(), []int{10, 1}
-}
-
 type EchoRequest_MSGID int32
 
 const (
@@ -424,11 +142,11 @@ func (x EchoRequest_MSGID) String() string {
 }
 
 func (EchoRequest_MSGID) Descriptor() protoreflect.EnumDescriptor {
-	return file_proto_route_proto_enumTypes[8].Descriptor()
+	return file_proto_route_proto_enumTypes[2].Descriptor()
 }
 
 func (EchoRequest_MSGID) Type() protoreflect.EnumType {
-	return &file_proto_route_proto_enumTypes[8]
+	return &file_proto_route_proto_enumTypes[2]
 }
 
 func (x EchoRequest_MSGID) Number() protoreflect.EnumNumber {
@@ -437,7 +155,7 @@ func (x EchoRequest_MSGID) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use EchoRequest_MSGID.Descriptor instead.
 func (EchoRequest_MSGID) EnumDescriptor() ([]byte, []int) {
-	return file_proto_route_proto_rawDescGZIP(), []int{11, 0}
+	return file_proto_route_proto_rawDescGZIP(), []int{7, 0}
 }
 
 type EchoResponse_MSGID int32
@@ -470,11 +188,11 @@ func (x EchoResponse_MSGID) String() string {
 }
 
 func (EchoResponse_MSGID) Descriptor() protoreflect.EnumDescriptor {
-	return file_proto_route_proto_enumTypes[9].Descriptor()
+	return file_proto_route_proto_enumTypes[3].Descriptor()
 }
 
 func (EchoResponse_MSGID) Type() protoreflect.EnumType {
-	return &file_proto_route_proto_enumTypes[9]
+	return &file_proto_route_proto_enumTypes[3]
 }
 
 func (x EchoResponse_MSGID) Number() protoreflect.EnumNumber {
@@ -483,7 +201,7 @@ func (x EchoResponse_MSGID) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use EchoResponse_MSGID.Descriptor instead.
 func (EchoResponse_MSGID) EnumDescriptor() ([]byte, []int) {
-	return file_proto_route_proto_rawDescGZIP(), []int{12, 0}
+	return file_proto_route_proto_rawDescGZIP(), []int{8, 0}
 }
 
 type GroupBroadcastRequest_MSGID int32
@@ -516,11 +234,11 @@ func (x GroupBroadcastRequest_MSGID) String() string {
 }
 
 func (GroupBroadcastRequest_MSGID) Descriptor() protoreflect.EnumDescriptor {
-	return file_proto_route_proto_enumTypes[10].Descriptor()
+	return file_proto_route_proto_enumTypes[4].Descriptor()
 }
 
 func (GroupBroadcastRequest_MSGID) Type() protoreflect.EnumType {
-	return &file_proto_route_proto_enumTypes[10]
+	return &file_proto_route_proto_enumTypes[4]
 }
 
 func (x GroupBroadcastRequest_MSGID) Number() protoreflect.EnumNumber {
@@ -529,7 +247,7 @@ func (x GroupBroadcastRequest_MSGID) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use GroupBroadcastRequest_MSGID.Descriptor instead.
 func (GroupBroadcastRequest_MSGID) EnumDescriptor() ([]byte, []int) {
-	return file_proto_route_proto_rawDescGZIP(), []int{13, 0}
+	return file_proto_route_proto_rawDescGZIP(), []int{9, 0}
 }
 
 type GroupBroadcastResponse_MSGID int32
@@ -562,11 +280,11 @@ func (x GroupBroadcastResponse_MSGID) String() string {
 }
 
 func (GroupBroadcastResponse_MSGID) Descriptor() protoreflect.EnumDescriptor {
-	return file_proto_route_proto_enumTypes[11].Descriptor()
+	return file_proto_route_proto_enumTypes[5].Descriptor()
 }
 
 func (GroupBroadcastResponse_MSGID) Type() protoreflect.EnumType {
-	return &file_proto_route_proto_enumTypes[11]
+	return &file_proto_route_proto_enumTypes[5]
 }
 
 func (x GroupBroadcastResponse_MSGID) Number() protoreflect.EnumNumber {
@@ -575,7 +293,7 @@ func (x GroupBroadcastResponse_MSGID) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use GroupBroadcastResponse_MSGID.Descriptor instead.
 func (GroupBroadcastResponse_MSGID) EnumDescriptor() ([]byte, []int) {
-	return file_proto_route_proto_rawDescGZIP(), []int{14, 0}
+	return file_proto_route_proto_rawDescGZIP(), []int{10, 0}
 }
 
 type JoinGroupRequest_MSGID int32
@@ -608,11 +326,11 @@ func (x JoinGroupRequest_MSGID) String() string {
 }
 
 func (JoinGroupRequest_MSGID) Descriptor() protoreflect.EnumDescriptor {
-	return file_proto_route_proto_enumTypes[12].Descriptor()
+	return file_proto_route_proto_enumTypes[6].Descriptor()
 }
 
 func (JoinGroupRequest_MSGID) Type() protoreflect.EnumType {
-	return &file_proto_route_proto_enumTypes[12]
+	return &file_proto_route_proto_enumTypes[6]
 }
 
 func (x JoinGroupRequest_MSGID) Number() protoreflect.EnumNumber {
@@ -621,7 +339,7 @@ func (x JoinGroupRequest_MSGID) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use JoinGroupRequest_MSGID.Descriptor instead.
 func (JoinGroupRequest_MSGID) EnumDescriptor() ([]byte, []int) {
-	return file_proto_route_proto_rawDescGZIP(), []int{15, 0}
+	return file_proto_route_proto_rawDescGZIP(), []int{11, 0}
 }
 
 type JoinGroupResponse_MSGID int32
@@ -654,11 +372,11 @@ func (x JoinGroupResponse_MSGID) String() string {
 }
 
 func (JoinGroupResponse_MSGID) Descriptor() protoreflect.EnumDescriptor {
-	return file_proto_route_proto_enumTypes[13].Descriptor()
+	return file_proto_route_proto_enumTypes[7].Descriptor()
 }
 
 func (JoinGroupResponse_MSGID) Type() protoreflect.EnumType {
-	return &file_proto_route_proto_enumTypes[13]
+	return &file_proto_route_proto_enumTypes[7]
 }
 
 func (x JoinGroupResponse_MSGID) Number() protoreflect.EnumNumber {
@@ -667,7 +385,7 @@ func (x JoinGroupResponse_MSGID) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use JoinGroupResponse_MSGID.Descriptor instead.
 func (JoinGroupResponse_MSGID) EnumDescriptor() ([]byte, []int) {
-	return file_proto_route_proto_rawDescGZIP(), []int{16, 0}
+	return file_proto_route_proto_rawDescGZIP(), []int{12, 0}
 }
 
 type ListGroupRequest_MSGID int32
@@ -700,11 +418,11 @@ func (x ListGroupRequest_MSGID) String() string {
 }
 
 func (ListGroupRequest_MSGID) Descriptor() protoreflect.EnumDescriptor {
-	return file_proto_route_proto_enumTypes[14].Descriptor()
+	return file_proto_route_proto_enumTypes[8].Descriptor()
 }
 
 func (ListGroupRequest_MSGID) Type() protoreflect.EnumType {
-	return &file_proto_route_proto_enumTypes[14]
+	return &file_proto_route_proto_enumTypes[8]
 }
 
 func (x ListGroupRequest_MSGID) Number() protoreflect.EnumNumber {
@@ -713,7 +431,7 @@ func (x ListGroupRequest_MSGID) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use ListGroupRequest_MSGID.Descriptor instead.
 func (ListGroupRequest_MSGID) EnumDescriptor() ([]byte, []int) {
-	return file_proto_route_proto_rawDescGZIP(), []int{18, 0}
+	return file_proto_route_proto_rawDescGZIP(), []int{14, 0}
 }
 
 type ListGroupResponse_MSGID int32
@@ -746,11 +464,11 @@ func (x ListGroupResponse_MSGID) String() string {
 }
 
 func (ListGroupResponse_MSGID) Descriptor() protoreflect.EnumDescriptor {
-	return file_proto_route_proto_enumTypes[15].Descriptor()
+	return file_proto_route_proto_enumTypes[9].Descriptor()
 }
 
 func (ListGroupResponse_MSGID) Type() protoreflect.EnumType {
-	return &file_proto_route_proto_enumTypes[15]
+	return &file_proto_route_proto_enumTypes[9]
 }
 
 func (x ListGroupResponse_MSGID) Number() protoreflect.EnumNumber {
@@ -759,7 +477,7 @@ func (x ListGroupResponse_MSGID) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use ListGroupResponse_MSGID.Descriptor instead.
 func (ListGroupResponse_MSGID) EnumDescriptor() ([]byte, []int) {
-	return file_proto_route_proto_rawDescGZIP(), []int{19, 0}
+	return file_proto_route_proto_rawDescGZIP(), []int{15, 0}
 }
 
 type CreateGroupRequest_MSGID int32
@@ -792,11 +510,11 @@ func (x CreateGroupRequest_MSGID) String() string {
 }
 
 func (CreateGroupRequest_MSGID) Descriptor() protoreflect.EnumDescriptor {
-	return file_proto_route_proto_enumTypes[16].Descriptor()
+	return file_proto_route_proto_enumTypes[10].Descriptor()
 }
 
 func (CreateGroupRequest_MSGID) Type() protoreflect.EnumType {
-	return &file_proto_route_proto_enumTypes[16]
+	return &file_proto_route_proto_enumTypes[10]
 }
 
 func (x CreateGroupRequest_MSGID) Number() protoreflect.EnumNumber {
@@ -805,7 +523,7 @@ func (x CreateGroupRequest_MSGID) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use CreateGroupRequest_MSGID.Descriptor instead.
 func (CreateGroupRequest_MSGID) EnumDescriptor() ([]byte, []int) {
-	return file_proto_route_proto_rawDescGZIP(), []int{20, 0}
+	return file_proto_route_proto_rawDescGZIP(), []int{16, 0}
 }
 
 type CreateGroupResponse_MSGID int32
@@ -838,11 +556,11 @@ func (x CreateGroupResponse_MSGID) String() string {
 }
 
 func (CreateGroupResponse_MSGID) Descriptor() protoreflect.EnumDescriptor {
-	return file_proto_route_proto_enumTypes[17].Descriptor()
+	return file_proto_route_proto_enumTypes[11].Descriptor()
 }
 
 func (CreateGroupResponse_MSGID) Type() protoreflect.EnumType {
-	return &file_proto_route_proto_enumTypes[17]
+	return &file_proto_route_proto_enumTypes[11]
 }
 
 func (x CreateGroupResponse_MSGID) Number() protoreflect.EnumNumber {
@@ -851,7 +569,7 @@ func (x CreateGroupResponse_MSGID) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use CreateGroupResponse_MSGID.Descriptor instead.
 func (CreateGroupResponse_MSGID) EnumDescriptor() ([]byte, []int) {
-	return file_proto_route_proto_rawDescGZIP(), []int{21, 0}
+	return file_proto_route_proto_rawDescGZIP(), []int{17, 0}
 }
 
 type DeleteGroupRequest_MSGID int32
@@ -884,11 +602,11 @@ func (x DeleteGroupRequest_MSGID) String() string {
 }
 
 func (DeleteGroupRequest_MSGID) Descriptor() protoreflect.EnumDescriptor {
-	return file_proto_route_proto_enumTypes[18].Descriptor()
+	return file_proto_route_proto_enumTypes[12].Descriptor()
 }
 
 func (DeleteGroupRequest_MSGID) Type() protoreflect.EnumType {
-	return &file_proto_route_proto_enumTypes[18]
+	return &file_proto_route_proto_enumTypes[12]
 }
 
 func (x DeleteGroupRequest_MSGID) Number() protoreflect.EnumNumber {
@@ -897,7 +615,7 @@ func (x DeleteGroupRequest_MSGID) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use DeleteGroupRequest_MSGID.Descriptor instead.
 func (DeleteGroupRequest_MSGID) EnumDescriptor() ([]byte, []int) {
-	return file_proto_route_proto_rawDescGZIP(), []int{22, 0}
+	return file_proto_route_proto_rawDescGZIP(), []int{18, 0}
 }
 
 type DeleteGroupResponse_MSGID int32
@@ -930,11 +648,11 @@ func (x DeleteGroupResponse_MSGID) String() string {
 }
 
 func (DeleteGroupResponse_MSGID) Descriptor() protoreflect.EnumDescriptor {
-	return file_proto_route_proto_enumTypes[19].Descriptor()
+	return file_proto_route_proto_enumTypes[13].Descriptor()
 }
 
 func (DeleteGroupResponse_MSGID) Type() protoreflect.EnumType {
-	return &file_proto_route_proto_enumTypes[19]
+	return &file_proto_route_proto_enumTypes[13]
 }
 
 func (x DeleteGroupResponse_MSGID) Number() protoreflect.EnumNumber {
@@ -943,7 +661,7 @@ func (x DeleteGroupResponse_MSGID) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use DeleteGroupResponse_MSGID.Descriptor instead.
 func (DeleteGroupResponse_MSGID) EnumDescriptor() ([]byte, []int) {
-	return file_proto_route_proto_rawDescGZIP(), []int{23, 0}
+	return file_proto_route_proto_rawDescGZIP(), []int{19, 0}
 }
 
 type PutInGroupRequest_MSGID int32
@@ -976,11 +694,11 @@ func (x PutInGroupRequest_MSGID) String() string {
 }
 
 func (PutInGroupRequest_MSGID) Descriptor() protoreflect.EnumDescriptor {
-	return file_proto_route_proto_enumTypes[20].Descriptor()
+	return file_proto_route_proto_enumTypes[14].Descriptor()
 }
 
 func (PutInGroupRequest_MSGID) Type() protoreflect.EnumType {
-	return &file_proto_route_proto_enumTypes[20]
+	return &file_proto_route_proto_enumTypes[14]
 }
 
 func (x PutInGroupRequest_MSGID) Number() protoreflect.EnumNumber {
@@ -989,7 +707,7 @@ func (x PutInGroupRequest_MSGID) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use PutInGroupRequest_MSGID.Descriptor instead.
 func (PutInGroupRequest_MSGID) EnumDescriptor() ([]byte, []int) {
-	return file_proto_route_proto_rawDescGZIP(), []int{24, 0}
+	return file_proto_route_proto_rawDescGZIP(), []int{20, 0}
 }
 
 type PutInGroupResponse_MSGID int32
@@ -1022,11 +740,11 @@ func (x PutInGroupResponse_MSGID) String() string {
 }
 
 func (PutInGroupResponse_MSGID) Descriptor() protoreflect.EnumDescriptor {
-	return file_proto_route_proto_enumTypes[21].Descriptor()
+	return file_proto_route_proto_enumTypes[15].Descriptor()
 }
 
 func (PutInGroupResponse_MSGID) Type() protoreflect.EnumType {
-	return &file_proto_route_proto_enumTypes[21]
+	return &file_proto_route_proto_enumTypes[15]
 }
 
 func (x PutInGroupResponse_MSGID) Number() protoreflect.EnumNumber {
@@ -1035,7 +753,7 @@ func (x PutInGroupResponse_MSGID) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use PutInGroupResponse_MSGID.Descriptor instead.
 func (PutInGroupResponse_MSGID) EnumDescriptor() ([]byte, []int) {
-	return file_proto_route_proto_rawDescGZIP(), []int{25, 0}
+	return file_proto_route_proto_rawDescGZIP(), []int{21, 0}
 }
 
 type PutInGroupResponse_ErrCode int32
@@ -1071,11 +789,11 @@ func (x PutInGroupResponse_ErrCode) String() string {
 }
 
 func (PutInGroupResponse_ErrCode) Descriptor() protoreflect.EnumDescriptor {
-	return file_proto_route_proto_enumTypes[22].Descriptor()
+	return file_proto_route_proto_enumTypes[16].Descriptor()
 }
 
 func (PutInGroupResponse_ErrCode) Type() protoreflect.EnumType {
-	return &file_proto_route_proto_enumTypes[22]
+	return &file_proto_route_proto_enumTypes[16]
 }
 
 func (x PutInGroupResponse_ErrCode) Number() protoreflect.EnumNumber {
@@ -1084,7 +802,7 @@ func (x PutInGroupResponse_ErrCode) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use PutInGroupResponse_ErrCode.Descriptor instead.
 func (PutInGroupResponse_ErrCode) EnumDescriptor() ([]byte, []int) {
-	return file_proto_route_proto_rawDescGZIP(), []int{25, 1}
+	return file_proto_route_proto_rawDescGZIP(), []int{21, 1}
 }
 
 type ListGroupSessionRequest_MSGID int32
@@ -1117,11 +835,11 @@ func (x ListGroupSessionRequest_MSGID) String() string {
 }
 
 func (ListGroupSessionRequest_MSGID) Descriptor() protoreflect.EnumDescriptor {
-	return file_proto_route_proto_enumTypes[23].Descriptor()
+	return file_proto_route_proto_enumTypes[17].Descriptor()
 }
 
 func (ListGroupSessionRequest_MSGID) Type() protoreflect.EnumType {
-	return &file_proto_route_proto_enumTypes[23]
+	return &file_proto_route_proto_enumTypes[17]
 }
 
 func (x ListGroupSessionRequest_MSGID) Number() protoreflect.EnumNumber {
@@ -1130,7 +848,7 @@ func (x ListGroupSessionRequest_MSGID) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use ListGroupSessionRequest_MSGID.Descriptor instead.
 func (ListGroupSessionRequest_MSGID) EnumDescriptor() ([]byte, []int) {
-	return file_proto_route_proto_rawDescGZIP(), []int{26, 0}
+	return file_proto_route_proto_rawDescGZIP(), []int{22, 0}
 }
 
 type ListGroupSessionResponse_MSGID int32
@@ -1163,11 +881,11 @@ func (x ListGroupSessionResponse_MSGID) String() string {
 }
 
 func (ListGroupSessionResponse_MSGID) Descriptor() protoreflect.EnumDescriptor {
-	return file_proto_route_proto_enumTypes[24].Descriptor()
+	return file_proto_route_proto_enumTypes[18].Descriptor()
 }
 
 func (ListGroupSessionResponse_MSGID) Type() protoreflect.EnumType {
-	return &file_proto_route_proto_enumTypes[24]
+	return &file_proto_route_proto_enumTypes[18]
 }
 
 func (x ListGroupSessionResponse_MSGID) Number() protoreflect.EnumNumber {
@@ -1176,7 +894,7 @@ func (x ListGroupSessionResponse_MSGID) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use ListGroupSessionResponse_MSGID.Descriptor instead.
 func (ListGroupSessionResponse_MSGID) EnumDescriptor() ([]byte, []int) {
-	return file_proto_route_proto_rawDescGZIP(), []int{27, 0}
+	return file_proto_route_proto_rawDescGZIP(), []int{23, 0}
 }
 
 type OSInfo struct {
@@ -1572,234 +1290,6 @@ func (x *Echo) GetBody() []byte {
 	return nil
 }
 
-type LoginRequest struct {
-	state         protoimpl.MessageState
-	sizeCache     protoimpl.SizeCache
-	unknownFields protoimpl.UnknownFields
-
-	Token string `protobuf:"bytes,1,opt,name=token,proto3" json:"token,omitempty"`
-}
-
-func (x *LoginRequest) Reset() {
-	*x = LoginRequest{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_proto_route_proto_msgTypes[7]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
-}
-
-func (x *LoginRequest) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*LoginRequest) ProtoMessage() {}
-
-func (x *LoginRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_route_proto_msgTypes[7]
-	if protoimpl.UnsafeEnabled && x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use LoginRequest.ProtoReflect.Descriptor instead.
-func (*LoginRequest) Descriptor() ([]byte, []int) {
-	return file_proto_route_proto_rawDescGZIP(), []int{7}
-}
-
-func (x *LoginRequest) GetToken() string {
-	if x != nil {
-		return x.Token
-	}
-	return ""
-}
-
-type LoginResponse struct {
-	state         protoimpl.MessageState
-	sizeCache     protoimpl.SizeCache
-	unknownFields protoimpl.UnknownFields
-
-	Errcode   LoginResponse_ErrCode `protobuf:"varint,1,opt,name=errcode,proto3,enum=route.LoginResponse_ErrCode" json:"errcode,omitempty"`
-	EnvReport *ClientEnvInfo        `protobuf:"bytes,2,opt,name=env_report,json=envReport,proto3" json:"env_report,omitempty"`
-	Uinfo     *UserInfo             `protobuf:"bytes,3,opt,name=uinfo,proto3" json:"uinfo,omitempty"`
-}
-
-func (x *LoginResponse) Reset() {
-	*x = LoginResponse{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_proto_route_proto_msgTypes[8]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
-}
-
-func (x *LoginResponse) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*LoginResponse) ProtoMessage() {}
-
-func (x *LoginResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_route_proto_msgTypes[8]
-	if protoimpl.UnsafeEnabled && x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use LoginResponse.ProtoReflect.Descriptor instead.
-func (*LoginResponse) Descriptor() ([]byte, []int) {
-	return file_proto_route_proto_rawDescGZIP(), []int{8}
-}
-
-func (x *LoginResponse) GetErrcode() LoginResponse_ErrCode {
-	if x != nil {
-		return x.Errcode
-	}
-	return LoginResponse_ok
-}
-
-func (x *LoginResponse) GetEnvReport() *ClientEnvInfo {
-	if x != nil {
-		return x.EnvReport
-	}
-	return nil
-}
-
-func (x *LoginResponse) GetUinfo() *UserInfo {
-	if x != nil {
-		return x.Uinfo
-	}
-	return nil
-}
-
-type AccountLoginRequest struct {
-	state         protoimpl.MessageState
-	sizeCache     protoimpl.SizeCache
-	unknownFields protoimpl.UnknownFields
-
-	Account   string         `protobuf:"bytes,1,opt,name=account,proto3" json:"account,omitempty"`
-	Password  string         `protobuf:"bytes,2,opt,name=password,proto3" json:"password,omitempty"`
-	EnvReport *ClientEnvInfo `protobuf:"bytes,3,opt,name=env_report,json=envReport,proto3" json:"env_report,omitempty"`
-}
-
-func (x *AccountLoginRequest) Reset() {
-	*x = AccountLoginRequest{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_proto_route_proto_msgTypes[9]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
-}
-
-func (x *AccountLoginRequest) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*AccountLoginRequest) ProtoMessage() {}
-
-func (x *AccountLoginRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_route_proto_msgTypes[9]
-	if protoimpl.UnsafeEnabled && x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use AccountLoginRequest.ProtoReflect.Descriptor instead.
-func (*AccountLoginRequest) Descriptor() ([]byte, []int) {
-	return file_proto_route_proto_rawDescGZIP(), []int{9}
-}
-
-func (x *AccountLoginRequest) GetAccount() string {
-	if x != nil {
-		return x.Account
-	}
-	return ""
-}
-
-func (x *AccountLoginRequest) GetPassword() string {
-	if x != nil {
-		return x.Password
-	}
-	return ""
-}
-
-func (x *AccountLoginRequest) GetEnvReport() *ClientEnvInfo {
-	if x != nil {
-		return x.EnvReport
-	}
-	return nil
-}
-
-type AccountLoginResponse struct {
-	state         protoimpl.MessageState
-	sizeCache     protoimpl.SizeCache
-	unknownFields protoimpl.UnknownFields
-
-	Errcode AccountLoginResponse_ErrCode `protobuf:"varint,1,opt,name=errcode,proto3,enum=route.AccountLoginResponse_ErrCode" json:"errcode,omitempty"`
-	Uinfo   *UserInfo                    `protobuf:"bytes,2,opt,name=uinfo,proto3" json:"uinfo,omitempty"`
-}
-
-func (x *AccountLoginResponse) Reset() {
-	*x = AccountLoginResponse{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_proto_route_proto_msgTypes[10]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
-}
-
-func (x *AccountLoginResponse) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*AccountLoginResponse) ProtoMessage() {}
-
-func (x *AccountLoginResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_route_proto_msgTypes[10]
-	if protoimpl.UnsafeEnabled && x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use AccountLoginResponse.ProtoReflect.Descriptor instead.
-func (*AccountLoginResponse) Descriptor() ([]byte, []int) {
-	return file_proto_route_proto_rawDescGZIP(), []int{10}
-}
-
-func (x *AccountLoginResponse) GetErrcode() AccountLoginResponse_ErrCode {
-	if x != nil {
-		return x.Errcode
-	}
-	return AccountLoginResponse_ok
-}
-
-func (x *AccountLoginResponse) GetUinfo() *UserInfo {
-	if x != nil {
-		return x.Uinfo
-	}
-	return nil
-}
-
 type EchoRequest struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -1811,7 +1301,7 @@ type EchoRequest struct {
 func (x *EchoRequest) Reset() {
 	*x = EchoRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_proto_route_proto_msgTypes[11]
+		mi := &file_proto_route_proto_msgTypes[7]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1824,7 +1314,7 @@ func (x *EchoRequest) String() string {
 func (*EchoRequest) ProtoMessage() {}
 
 func (x *EchoRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_route_proto_msgTypes[11]
+	mi := &file_proto_route_proto_msgTypes[7]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1837,7 +1327,7 @@ func (x *EchoRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use EchoRequest.ProtoReflect.Descriptor instead.
 func (*EchoRequest) Descriptor() ([]byte, []int) {
-	return file_proto_route_proto_rawDescGZIP(), []int{11}
+	return file_proto_route_proto_rawDescGZIP(), []int{7}
 }
 
 func (x *EchoRequest) GetMsg() string {
@@ -1858,7 +1348,7 @@ type EchoResponse struct {
 func (x *EchoResponse) Reset() {
 	*x = EchoResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_proto_route_proto_msgTypes[12]
+		mi := &file_proto_route_proto_msgTypes[8]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1871,7 +1361,7 @@ func (x *EchoResponse) String() string {
 func (*EchoResponse) ProtoMessage() {}
 
 func (x *EchoResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_route_proto_msgTypes[12]
+	mi := &file_proto_route_proto_msgTypes[8]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1884,7 +1374,7 @@ func (x *EchoResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use EchoResponse.ProtoReflect.Descriptor instead.
 func (*EchoResponse) Descriptor() ([]byte, []int) {
-	return file_proto_route_proto_rawDescGZIP(), []int{12}
+	return file_proto_route_proto_rawDescGZIP(), []int{8}
 }
 
 func (x *EchoResponse) GetMsg() string {
@@ -1907,7 +1397,7 @@ type GroupBroadcastRequest struct {
 func (x *GroupBroadcastRequest) Reset() {
 	*x = GroupBroadcastRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_proto_route_proto_msgTypes[13]
+		mi := &file_proto_route_proto_msgTypes[9]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1920,7 +1410,7 @@ func (x *GroupBroadcastRequest) String() string {
 func (*GroupBroadcastRequest) ProtoMessage() {}
 
 func (x *GroupBroadcastRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_route_proto_msgTypes[13]
+	mi := &file_proto_route_proto_msgTypes[9]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1933,7 +1423,7 @@ func (x *GroupBroadcastRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GroupBroadcastRequest.ProtoReflect.Descriptor instead.
 func (*GroupBroadcastRequest) Descriptor() ([]byte, []int) {
-	return file_proto_route_proto_rawDescGZIP(), []int{13}
+	return file_proto_route_proto_rawDescGZIP(), []int{9}
 }
 
 func (x *GroupBroadcastRequest) GetGroup() string {
@@ -1968,7 +1458,7 @@ type GroupBroadcastResponse struct {
 func (x *GroupBroadcastResponse) Reset() {
 	*x = GroupBroadcastResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_proto_route_proto_msgTypes[14]
+		mi := &file_proto_route_proto_msgTypes[10]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1981,7 +1471,7 @@ func (x *GroupBroadcastResponse) String() string {
 func (*GroupBroadcastResponse) ProtoMessage() {}
 
 func (x *GroupBroadcastResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_route_proto_msgTypes[14]
+	mi := &file_proto_route_proto_msgTypes[10]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1994,7 +1484,7 @@ func (x *GroupBroadcastResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GroupBroadcastResponse.ProtoReflect.Descriptor instead.
 func (*GroupBroadcastResponse) Descriptor() ([]byte, []int) {
-	return file_proto_route_proto_rawDescGZIP(), []int{14}
+	return file_proto_route_proto_rawDescGZIP(), []int{10}
 }
 
 func (x *GroupBroadcastResponse) GetRecvCount() uint32 {
@@ -2015,7 +1505,7 @@ type JoinGroupRequest struct {
 func (x *JoinGroupRequest) Reset() {
 	*x = JoinGroupRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_proto_route_proto_msgTypes[15]
+		mi := &file_proto_route_proto_msgTypes[11]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -2028,7 +1518,7 @@ func (x *JoinGroupRequest) String() string {
 func (*JoinGroupRequest) ProtoMessage() {}
 
 func (x *JoinGroupRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_route_proto_msgTypes[15]
+	mi := &file_proto_route_proto_msgTypes[11]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2041,7 +1531,7 @@ func (x *JoinGroupRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use JoinGroupRequest.ProtoReflect.Descriptor instead.
 func (*JoinGroupRequest) Descriptor() ([]byte, []int) {
-	return file_proto_route_proto_rawDescGZIP(), []int{15}
+	return file_proto_route_proto_rawDescGZIP(), []int{11}
 }
 
 func (x *JoinGroupRequest) GetGroups() []string {
@@ -2062,7 +1552,7 @@ type JoinGroupResponse struct {
 func (x *JoinGroupResponse) Reset() {
 	*x = JoinGroupResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_proto_route_proto_msgTypes[16]
+		mi := &file_proto_route_proto_msgTypes[12]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -2075,7 +1565,7 @@ func (x *JoinGroupResponse) String() string {
 func (*JoinGroupResponse) ProtoMessage() {}
 
 func (x *JoinGroupResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_route_proto_msgTypes[16]
+	mi := &file_proto_route_proto_msgTypes[12]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2088,7 +1578,7 @@ func (x *JoinGroupResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use JoinGroupResponse.ProtoReflect.Descriptor instead.
 func (*JoinGroupResponse) Descriptor() ([]byte, []int) {
-	return file_proto_route_proto_rawDescGZIP(), []int{16}
+	return file_proto_route_proto_rawDescGZIP(), []int{12}
 }
 
 func (x *JoinGroupResponse) GetGroups() []string {
@@ -2110,7 +1600,7 @@ type Page struct {
 func (x *Page) Reset() {
 	*x = Page{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_proto_route_proto_msgTypes[17]
+		mi := &file_proto_route_proto_msgTypes[13]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -2123,7 +1613,7 @@ func (x *Page) String() string {
 func (*Page) ProtoMessage() {}
 
 func (x *Page) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_route_proto_msgTypes[17]
+	mi := &file_proto_route_proto_msgTypes[13]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2136,7 +1626,7 @@ func (x *Page) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Page.ProtoReflect.Descriptor instead.
 func (*Page) Descriptor() ([]byte, []int) {
-	return file_proto_route_proto_rawDescGZIP(), []int{17}
+	return file_proto_route_proto_rawDescGZIP(), []int{13}
 }
 
 func (x *Page) GetStartAt() uint32 {
@@ -2164,7 +1654,7 @@ type ListGroupRequest struct {
 func (x *ListGroupRequest) Reset() {
 	*x = ListGroupRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_proto_route_proto_msgTypes[18]
+		mi := &file_proto_route_proto_msgTypes[14]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -2177,7 +1667,7 @@ func (x *ListGroupRequest) String() string {
 func (*ListGroupRequest) ProtoMessage() {}
 
 func (x *ListGroupRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_route_proto_msgTypes[18]
+	mi := &file_proto_route_proto_msgTypes[14]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2190,7 +1680,7 @@ func (x *ListGroupRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListGroupRequest.ProtoReflect.Descriptor instead.
 func (*ListGroupRequest) Descriptor() ([]byte, []int) {
-	return file_proto_route_proto_rawDescGZIP(), []int{18}
+	return file_proto_route_proto_rawDescGZIP(), []int{14}
 }
 
 func (x *ListGroupRequest) GetPage() *Page {
@@ -2212,7 +1702,7 @@ type ListGroupResponse struct {
 func (x *ListGroupResponse) Reset() {
 	*x = ListGroupResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_proto_route_proto_msgTypes[19]
+		mi := &file_proto_route_proto_msgTypes[15]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -2225,7 +1715,7 @@ func (x *ListGroupResponse) String() string {
 func (*ListGroupResponse) ProtoMessage() {}
 
 func (x *ListGroupResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_route_proto_msgTypes[19]
+	mi := &file_proto_route_proto_msgTypes[15]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2238,7 +1728,7 @@ func (x *ListGroupResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListGroupResponse.ProtoReflect.Descriptor instead.
 func (*ListGroupResponse) Descriptor() ([]byte, []int) {
-	return file_proto_route_proto_rawDescGZIP(), []int{19}
+	return file_proto_route_proto_rawDescGZIP(), []int{15}
 }
 
 func (x *ListGroupResponse) GetGroups() []string {
@@ -2267,7 +1757,7 @@ type CreateGroupRequest struct {
 func (x *CreateGroupRequest) Reset() {
 	*x = CreateGroupRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_proto_route_proto_msgTypes[20]
+		mi := &file_proto_route_proto_msgTypes[16]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -2280,7 +1770,7 @@ func (x *CreateGroupRequest) String() string {
 func (*CreateGroupRequest) ProtoMessage() {}
 
 func (x *CreateGroupRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_route_proto_msgTypes[20]
+	mi := &file_proto_route_proto_msgTypes[16]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2293,7 +1783,7 @@ func (x *CreateGroupRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreateGroupRequest.ProtoReflect.Descriptor instead.
 func (*CreateGroupRequest) Descriptor() ([]byte, []int) {
-	return file_proto_route_proto_rawDescGZIP(), []int{20}
+	return file_proto_route_proto_rawDescGZIP(), []int{16}
 }
 
 func (x *CreateGroupRequest) GetGroup() string {
@@ -2321,7 +1811,7 @@ type CreateGroupResponse struct {
 func (x *CreateGroupResponse) Reset() {
 	*x = CreateGroupResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_proto_route_proto_msgTypes[21]
+		mi := &file_proto_route_proto_msgTypes[17]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -2334,7 +1824,7 @@ func (x *CreateGroupResponse) String() string {
 func (*CreateGroupResponse) ProtoMessage() {}
 
 func (x *CreateGroupResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_route_proto_msgTypes[21]
+	mi := &file_proto_route_proto_msgTypes[17]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2347,7 +1837,7 @@ func (x *CreateGroupResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreateGroupResponse.ProtoReflect.Descriptor instead.
 func (*CreateGroupResponse) Descriptor() ([]byte, []int) {
-	return file_proto_route_proto_rawDescGZIP(), []int{21}
+	return file_proto_route_proto_rawDescGZIP(), []int{17}
 }
 
 func (x *CreateGroupResponse) GetGroup() string {
@@ -2368,7 +1858,7 @@ type DeleteGroupRequest struct {
 func (x *DeleteGroupRequest) Reset() {
 	*x = DeleteGroupRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_proto_route_proto_msgTypes[22]
+		mi := &file_proto_route_proto_msgTypes[18]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -2381,7 +1871,7 @@ func (x *DeleteGroupRequest) String() string {
 func (*DeleteGroupRequest) ProtoMessage() {}
 
 func (x *DeleteGroupRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_route_proto_msgTypes[22]
+	mi := &file_proto_route_proto_msgTypes[18]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2394,7 +1884,7 @@ func (x *DeleteGroupRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteGroupRequest.ProtoReflect.Descriptor instead.
 func (*DeleteGroupRequest) Descriptor() ([]byte, []int) {
-	return file_proto_route_proto_rawDescGZIP(), []int{22}
+	return file_proto_route_proto_rawDescGZIP(), []int{18}
 }
 
 func (x *DeleteGroupRequest) GetGroup() string {
@@ -2415,7 +1905,7 @@ type DeleteGroupResponse struct {
 func (x *DeleteGroupResponse) Reset() {
 	*x = DeleteGroupResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_proto_route_proto_msgTypes[23]
+		mi := &file_proto_route_proto_msgTypes[19]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -2428,7 +1918,7 @@ func (x *DeleteGroupResponse) String() string {
 func (*DeleteGroupResponse) ProtoMessage() {}
 
 func (x *DeleteGroupResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_route_proto_msgTypes[23]
+	mi := &file_proto_route_proto_msgTypes[19]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2441,7 +1931,7 @@ func (x *DeleteGroupResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteGroupResponse.ProtoReflect.Descriptor instead.
 func (*DeleteGroupResponse) Descriptor() ([]byte, []int) {
-	return file_proto_route_proto_rawDescGZIP(), []int{23}
+	return file_proto_route_proto_rawDescGZIP(), []int{19}
 }
 
 func (x *DeleteGroupResponse) GetGroup() string {
@@ -2463,7 +1953,7 @@ type PutInGroupRequest struct {
 func (x *PutInGroupRequest) Reset() {
 	*x = PutInGroupRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_proto_route_proto_msgTypes[24]
+		mi := &file_proto_route_proto_msgTypes[20]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -2476,7 +1966,7 @@ func (x *PutInGroupRequest) String() string {
 func (*PutInGroupRequest) ProtoMessage() {}
 
 func (x *PutInGroupRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_route_proto_msgTypes[24]
+	mi := &file_proto_route_proto_msgTypes[20]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2489,7 +1979,7 @@ func (x *PutInGroupRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PutInGroupRequest.ProtoReflect.Descriptor instead.
 func (*PutInGroupRequest) Descriptor() ([]byte, []int) {
-	return file_proto_route_proto_rawDescGZIP(), []int{24}
+	return file_proto_route_proto_rawDescGZIP(), []int{20}
 }
 
 func (x *PutInGroupRequest) GetGroup() string {
@@ -2518,7 +2008,7 @@ type PutInGroupResponse struct {
 func (x *PutInGroupResponse) Reset() {
 	*x = PutInGroupResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_proto_route_proto_msgTypes[25]
+		mi := &file_proto_route_proto_msgTypes[21]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -2531,7 +2021,7 @@ func (x *PutInGroupResponse) String() string {
 func (*PutInGroupResponse) ProtoMessage() {}
 
 func (x *PutInGroupResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_route_proto_msgTypes[25]
+	mi := &file_proto_route_proto_msgTypes[21]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2544,7 +2034,7 @@ func (x *PutInGroupResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PutInGroupResponse.ProtoReflect.Descriptor instead.
 func (*PutInGroupResponse) Descriptor() ([]byte, []int) {
-	return file_proto_route_proto_rawDescGZIP(), []int{25}
+	return file_proto_route_proto_rawDescGZIP(), []int{21}
 }
 
 func (x *PutInGroupResponse) GetErrcode() PutInGroupResponse_ErrCode {
@@ -2573,7 +2063,7 @@ type ListGroupSessionRequest struct {
 func (x *ListGroupSessionRequest) Reset() {
 	*x = ListGroupSessionRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_proto_route_proto_msgTypes[26]
+		mi := &file_proto_route_proto_msgTypes[22]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -2586,7 +2076,7 @@ func (x *ListGroupSessionRequest) String() string {
 func (*ListGroupSessionRequest) ProtoMessage() {}
 
 func (x *ListGroupSessionRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_route_proto_msgTypes[26]
+	mi := &file_proto_route_proto_msgTypes[22]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2599,7 +2089,7 @@ func (x *ListGroupSessionRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListGroupSessionRequest.ProtoReflect.Descriptor instead.
 func (*ListGroupSessionRequest) Descriptor() ([]byte, []int) {
-	return file_proto_route_proto_rawDescGZIP(), []int{26}
+	return file_proto_route_proto_rawDescGZIP(), []int{22}
 }
 
 func (x *ListGroupSessionRequest) GetGroup() string {
@@ -2628,7 +2118,7 @@ type ListGroupSessionResponse struct {
 func (x *ListGroupSessionResponse) Reset() {
 	*x = ListGroupSessionResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_proto_route_proto_msgTypes[27]
+		mi := &file_proto_route_proto_msgTypes[23]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -2641,7 +2131,7 @@ func (x *ListGroupSessionResponse) String() string {
 func (*ListGroupSessionResponse) ProtoMessage() {}
 
 func (x *ListGroupSessionResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_route_proto_msgTypes[27]
+	mi := &file_proto_route_proto_msgTypes[23]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2654,7 +2144,7 @@ func (x *ListGroupSessionResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListGroupSessionResponse.ProtoReflect.Descriptor instead.
 func (*ListGroupSessionResponse) Descriptor() ([]byte, []int) {
-	return file_proto_route_proto_rawDescGZIP(), []int{27}
+	return file_proto_route_proto_rawDescGZIP(), []int{23}
 }
 
 func (x *ListGroupSessionResponse) GetUinfos() []*UserInfo {
@@ -2708,157 +2198,112 @@ var file_proto_route_proto_rawDesc = []byte{
 	0x62, 0x6f, 0x64, 0x79, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0c, 0x52, 0x04, 0x62, 0x6f, 0x64, 0x79,
 	0x22, 0x22, 0x0a, 0x05, 0x4d, 0x53, 0x47, 0x49, 0x44, 0x12, 0x11, 0x0a, 0x0d, 0x49, 0x4e, 0x56,
 	0x41, 0x4c, 0x49, 0x44, 0x5f, 0x4d, 0x53, 0x47, 0x49, 0x44, 0x10, 0x00, 0x12, 0x06, 0x0a, 0x02,
-	0x49, 0x44, 0x10, 0x63, 0x22, 0x48, 0x0a, 0x0c, 0x4c, 0x6f, 0x67, 0x69, 0x6e, 0x52, 0x65, 0x71,
-	0x75, 0x65, 0x73, 0x74, 0x12, 0x14, 0x0a, 0x05, 0x74, 0x6f, 0x6b, 0x65, 0x6e, 0x18, 0x01, 0x20,
-	0x01, 0x28, 0x09, 0x52, 0x05, 0x74, 0x6f, 0x6b, 0x65, 0x6e, 0x22, 0x22, 0x0a, 0x05, 0x4d, 0x53,
-	0x47, 0x49, 0x44, 0x12, 0x11, 0x0a, 0x0d, 0x49, 0x4e, 0x56, 0x41, 0x4c, 0x49, 0x44, 0x5f, 0x4d,
-	0x53, 0x47, 0x49, 0x44, 0x10, 0x00, 0x12, 0x06, 0x0a, 0x02, 0x49, 0x44, 0x10, 0x64, 0x22, 0xfd,
-	0x01, 0x0a, 0x0d, 0x4c, 0x6f, 0x67, 0x69, 0x6e, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65,
-	0x12, 0x36, 0x0a, 0x07, 0x65, 0x72, 0x72, 0x63, 0x6f, 0x64, 0x65, 0x18, 0x01, 0x20, 0x01, 0x28,
-	0x0e, 0x32, 0x1c, 0x2e, 0x72, 0x6f, 0x75, 0x74, 0x65, 0x2e, 0x4c, 0x6f, 0x67, 0x69, 0x6e, 0x52,
-	0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x2e, 0x45, 0x72, 0x72, 0x43, 0x6f, 0x64, 0x65, 0x52,
-	0x07, 0x65, 0x72, 0x72, 0x63, 0x6f, 0x64, 0x65, 0x12, 0x33, 0x0a, 0x0a, 0x65, 0x6e, 0x76, 0x5f,
-	0x72, 0x65, 0x70, 0x6f, 0x72, 0x74, 0x18, 0x02, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x14, 0x2e, 0x72,
-	0x6f, 0x75, 0x74, 0x65, 0x2e, 0x43, 0x6c, 0x69, 0x65, 0x6e, 0x74, 0x45, 0x6e, 0x76, 0x49, 0x6e,
-	0x66, 0x6f, 0x52, 0x09, 0x65, 0x6e, 0x76, 0x52, 0x65, 0x70, 0x6f, 0x72, 0x74, 0x12, 0x25, 0x0a,
-	0x05, 0x75, 0x69, 0x6e, 0x66, 0x6f, 0x18, 0x03, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x0f, 0x2e, 0x72,
-	0x6f, 0x75, 0x74, 0x65, 0x2e, 0x55, 0x73, 0x65, 0x72, 0x49, 0x6e, 0x66, 0x6f, 0x52, 0x05, 0x75,
-	0x69, 0x6e, 0x66, 0x6f, 0x22, 0x22, 0x0a, 0x05, 0x4d, 0x53, 0x47, 0x49, 0x44, 0x12, 0x11, 0x0a,
-	0x0d, 0x49, 0x4e, 0x56, 0x41, 0x4c, 0x49, 0x44, 0x5f, 0x4d, 0x53, 0x47, 0x49, 0x44, 0x10, 0x00,
-	0x12, 0x06, 0x0a, 0x02, 0x49, 0x44, 0x10, 0x65, 0x22, 0x34, 0x0a, 0x07, 0x45, 0x72, 0x72, 0x43,
-	0x6f, 0x64, 0x65, 0x12, 0x06, 0x0a, 0x02, 0x6f, 0x6b, 0x10, 0x00, 0x12, 0x0e, 0x0a, 0x0a, 0x75,
-	0x6e, 0x6b, 0x6f, 0x77, 0x6e, 0x5f, 0x65, 0x72, 0x72, 0x10, 0x01, 0x12, 0x11, 0x0a, 0x0d, 0x69,
-	0x6e, 0x76, 0x61, 0x6c, 0x69, 0x64, 0x5f, 0x74, 0x6f, 0x6b, 0x65, 0x6e, 0x10, 0x0b, 0x22, 0xa4,
-	0x01, 0x0a, 0x13, 0x41, 0x63, 0x63, 0x6f, 0x75, 0x6e, 0x74, 0x4c, 0x6f, 0x67, 0x69, 0x6e, 0x52,
-	0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x18, 0x0a, 0x07, 0x61, 0x63, 0x63, 0x6f, 0x75, 0x6e,
-	0x74, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x07, 0x61, 0x63, 0x63, 0x6f, 0x75, 0x6e, 0x74,
-	0x12, 0x1a, 0x0a, 0x08, 0x70, 0x61, 0x73, 0x73, 0x77, 0x6f, 0x72, 0x64, 0x18, 0x02, 0x20, 0x01,
-	0x28, 0x09, 0x52, 0x08, 0x70, 0x61, 0x73, 0x73, 0x77, 0x6f, 0x72, 0x64, 0x12, 0x33, 0x0a, 0x0a,
-	0x65, 0x6e, 0x76, 0x5f, 0x72, 0x65, 0x70, 0x6f, 0x72, 0x74, 0x18, 0x03, 0x20, 0x01, 0x28, 0x0b,
-	0x32, 0x14, 0x2e, 0x72, 0x6f, 0x75, 0x74, 0x65, 0x2e, 0x43, 0x6c, 0x69, 0x65, 0x6e, 0x74, 0x45,
-	0x6e, 0x76, 0x49, 0x6e, 0x66, 0x6f, 0x52, 0x09, 0x65, 0x6e, 0x76, 0x52, 0x65, 0x70, 0x6f, 0x72,
-	0x74, 0x22, 0x22, 0x0a, 0x05, 0x4d, 0x53, 0x47, 0x49, 0x44, 0x12, 0x11, 0x0a, 0x0d, 0x49, 0x4e,
-	0x56, 0x41, 0x4c, 0x49, 0x44, 0x5f, 0x4d, 0x53, 0x47, 0x49, 0x44, 0x10, 0x00, 0x12, 0x06, 0x0a,
-	0x02, 0x49, 0x44, 0x10, 0x66, 0x22, 0xd4, 0x01, 0x0a, 0x14, 0x41, 0x63, 0x63, 0x6f, 0x75, 0x6e,
-	0x74, 0x4c, 0x6f, 0x67, 0x69, 0x6e, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x3d,
-	0x0a, 0x07, 0x65, 0x72, 0x72, 0x63, 0x6f, 0x64, 0x65, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0e, 0x32,
-	0x23, 0x2e, 0x72, 0x6f, 0x75, 0x74, 0x65, 0x2e, 0x41, 0x63, 0x63, 0x6f, 0x75, 0x6e, 0x74, 0x4c,
-	0x6f, 0x67, 0x69, 0x6e, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x2e, 0x45, 0x72, 0x72,
-	0x43, 0x6f, 0x64, 0x65, 0x52, 0x07, 0x65, 0x72, 0x72, 0x63, 0x6f, 0x64, 0x65, 0x12, 0x25, 0x0a,
-	0x05, 0x75, 0x69, 0x6e, 0x66, 0x6f, 0x18, 0x02, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x0f, 0x2e, 0x72,
-	0x6f, 0x75, 0x74, 0x65, 0x2e, 0x55, 0x73, 0x65, 0x72, 0x49, 0x6e, 0x66, 0x6f, 0x52, 0x05, 0x75,
-	0x69, 0x6e, 0x66, 0x6f, 0x22, 0x22, 0x0a, 0x05, 0x4d, 0x53, 0x47, 0x49, 0x44, 0x12, 0x11, 0x0a,
-	0x0d, 0x49, 0x4e, 0x56, 0x41, 0x4c, 0x49, 0x44, 0x5f, 0x4d, 0x53, 0x47, 0x49, 0x44, 0x10, 0x00,
-	0x12, 0x06, 0x0a, 0x02, 0x49, 0x44, 0x10, 0x67, 0x22, 0x32, 0x0a, 0x07, 0x45, 0x72, 0x72, 0x43,
-	0x6f, 0x64, 0x65, 0x12, 0x06, 0x0a, 0x02, 0x6f, 0x6b, 0x10, 0x00, 0x12, 0x0e, 0x0a, 0x0a, 0x75,
-	0x6e, 0x6b, 0x6f, 0x77, 0x6e, 0x5f, 0x65, 0x72, 0x72, 0x10, 0x01, 0x12, 0x0f, 0x0a, 0x0b, 0x69,
-	0x6e, 0x76, 0x61, 0x6c, 0x69, 0x64, 0x5f, 0x70, 0x77, 0x64, 0x10, 0x0b, 0x22, 0x43, 0x0a, 0x0b,
-	0x45, 0x63, 0x68, 0x6f, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x10, 0x0a, 0x03, 0x6d,
-	0x73, 0x67, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x03, 0x6d, 0x73, 0x67, 0x22, 0x22, 0x0a,
-	0x05, 0x4d, 0x53, 0x47, 0x49, 0x44, 0x12, 0x11, 0x0a, 0x0d, 0x49, 0x4e, 0x56, 0x41, 0x4c, 0x49,
-	0x44, 0x5f, 0x4d, 0x53, 0x47, 0x49, 0x44, 0x10, 0x00, 0x12, 0x06, 0x0a, 0x02, 0x49, 0x44, 0x10,
-	0x68, 0x22, 0x44, 0x0a, 0x0c, 0x45, 0x63, 0x68, 0x6f, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73,
-	0x65, 0x12, 0x10, 0x0a, 0x03, 0x6d, 0x73, 0x67, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x03,
-	0x6d, 0x73, 0x67, 0x22, 0x22, 0x0a, 0x05, 0x4d, 0x53, 0x47, 0x49, 0x44, 0x12, 0x11, 0x0a, 0x0d,
-	0x49, 0x4e, 0x56, 0x41, 0x4c, 0x49, 0x44, 0x5f, 0x4d, 0x53, 0x47, 0x49, 0x44, 0x10, 0x00, 0x12,
-	0x06, 0x0a, 0x02, 0x49, 0x44, 0x10, 0x69, 0x22, 0x81, 0x01, 0x0a, 0x15, 0x47, 0x72, 0x6f, 0x75,
-	0x70, 0x42, 0x72, 0x6f, 0x61, 0x64, 0x63, 0x61, 0x73, 0x74, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73,
-	0x74, 0x12, 0x14, 0x0a, 0x05, 0x67, 0x72, 0x6f, 0x75, 0x70, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09,
-	0x52, 0x05, 0x67, 0x72, 0x6f, 0x75, 0x70, 0x12, 0x14, 0x0a, 0x05, 0x6d, 0x73, 0x67, 0x69, 0x64,
-	0x18, 0x02, 0x20, 0x01, 0x28, 0x0d, 0x52, 0x05, 0x6d, 0x73, 0x67, 0x69, 0x64, 0x12, 0x18, 0x0a,
-	0x07, 0x6d, 0x73, 0x67, 0x64, 0x61, 0x74, 0x61, 0x18, 0x03, 0x20, 0x01, 0x28, 0x0c, 0x52, 0x07,
-	0x6d, 0x73, 0x67, 0x64, 0x61, 0x74, 0x61, 0x22, 0x22, 0x0a, 0x05, 0x4d, 0x53, 0x47, 0x49, 0x44,
-	0x12, 0x11, 0x0a, 0x0d, 0x49, 0x4e, 0x56, 0x41, 0x4c, 0x49, 0x44, 0x5f, 0x4d, 0x53, 0x47, 0x49,
-	0x44, 0x10, 0x00, 0x12, 0x06, 0x0a, 0x02, 0x49, 0x44, 0x10, 0x6a, 0x22, 0x5b, 0x0a, 0x16, 0x47,
-	0x72, 0x6f, 0x75, 0x70, 0x42, 0x72, 0x6f, 0x61, 0x64, 0x63, 0x61, 0x73, 0x74, 0x52, 0x65, 0x73,
-	0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x1d, 0x0a, 0x0a, 0x72, 0x65, 0x63, 0x76, 0x5f, 0x63, 0x6f,
-	0x75, 0x6e, 0x74, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0d, 0x52, 0x09, 0x72, 0x65, 0x63, 0x76, 0x43,
-	0x6f, 0x75, 0x6e, 0x74, 0x22, 0x22, 0x0a, 0x05, 0x4d, 0x53, 0x47, 0x49, 0x44, 0x12, 0x11, 0x0a,
-	0x0d, 0x49, 0x4e, 0x56, 0x41, 0x4c, 0x49, 0x44, 0x5f, 0x4d, 0x53, 0x47, 0x49, 0x44, 0x10, 0x00,
-	0x12, 0x06, 0x0a, 0x02, 0x49, 0x44, 0x10, 0x6b, 0x22, 0x4e, 0x0a, 0x10, 0x4a, 0x6f, 0x69, 0x6e,
-	0x47, 0x72, 0x6f, 0x75, 0x70, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x16, 0x0a, 0x06,
-	0x67, 0x72, 0x6f, 0x75, 0x70, 0x73, 0x18, 0x01, 0x20, 0x03, 0x28, 0x09, 0x52, 0x06, 0x67, 0x72,
-	0x6f, 0x75, 0x70, 0x73, 0x22, 0x22, 0x0a, 0x05, 0x4d, 0x53, 0x47, 0x49, 0x44, 0x12, 0x11, 0x0a,
-	0x0d, 0x49, 0x4e, 0x56, 0x41, 0x4c, 0x49, 0x44, 0x5f, 0x4d, 0x53, 0x47, 0x49, 0x44, 0x10, 0x00,
-	0x12, 0x06, 0x0a, 0x02, 0x49, 0x44, 0x10, 0x6c, 0x22, 0x4f, 0x0a, 0x11, 0x4a, 0x6f, 0x69, 0x6e,
-	0x47, 0x72, 0x6f, 0x75, 0x70, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x16, 0x0a,
-	0x06, 0x67, 0x72, 0x6f, 0x75, 0x70, 0x73, 0x18, 0x01, 0x20, 0x03, 0x28, 0x09, 0x52, 0x06, 0x67,
-	0x72, 0x6f, 0x75, 0x70, 0x73, 0x22, 0x22, 0x0a, 0x05, 0x4d, 0x53, 0x47, 0x49, 0x44, 0x12, 0x11,
+	0x49, 0x44, 0x10, 0x63, 0x22, 0x43, 0x0a, 0x0b, 0x45, 0x63, 0x68, 0x6f, 0x52, 0x65, 0x71, 0x75,
+	0x65, 0x73, 0x74, 0x12, 0x10, 0x0a, 0x03, 0x6d, 0x73, 0x67, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09,
+	0x52, 0x03, 0x6d, 0x73, 0x67, 0x22, 0x22, 0x0a, 0x05, 0x4d, 0x53, 0x47, 0x49, 0x44, 0x12, 0x11,
 	0x0a, 0x0d, 0x49, 0x4e, 0x56, 0x41, 0x4c, 0x49, 0x44, 0x5f, 0x4d, 0x53, 0x47, 0x49, 0x44, 0x10,
-	0x00, 0x12, 0x06, 0x0a, 0x02, 0x49, 0x44, 0x10, 0x6d, 0x22, 0x38, 0x0a, 0x04, 0x50, 0x61, 0x67,
-	0x65, 0x12, 0x19, 0x0a, 0x08, 0x73, 0x74, 0x61, 0x72, 0x74, 0x5f, 0x61, 0x74, 0x18, 0x01, 0x20,
-	0x01, 0x28, 0x0d, 0x52, 0x07, 0x73, 0x74, 0x61, 0x72, 0x74, 0x41, 0x74, 0x12, 0x15, 0x0a, 0x06,
-	0x65, 0x6e, 0x64, 0x5f, 0x61, 0x74, 0x18, 0x02, 0x20, 0x01, 0x28, 0x0d, 0x52, 0x05, 0x65, 0x6e,
-	0x64, 0x41, 0x74, 0x22, 0x57, 0x0a, 0x10, 0x4c, 0x69, 0x73, 0x74, 0x47, 0x72, 0x6f, 0x75, 0x70,
-	0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x1f, 0x0a, 0x04, 0x70, 0x61, 0x67, 0x65, 0x18,
-	0x01, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x0b, 0x2e, 0x72, 0x6f, 0x75, 0x74, 0x65, 0x2e, 0x50, 0x61,
-	0x67, 0x65, 0x52, 0x04, 0x70, 0x61, 0x67, 0x65, 0x22, 0x22, 0x0a, 0x05, 0x4d, 0x53, 0x47, 0x49,
-	0x44, 0x12, 0x11, 0x0a, 0x0d, 0x49, 0x4e, 0x56, 0x41, 0x4c, 0x49, 0x44, 0x5f, 0x4d, 0x53, 0x47,
-	0x49, 0x44, 0x10, 0x00, 0x12, 0x06, 0x0a, 0x02, 0x49, 0x44, 0x10, 0x6e, 0x22, 0x65, 0x0a, 0x11,
-	0x4c, 0x69, 0x73, 0x74, 0x47, 0x72, 0x6f, 0x75, 0x70, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73,
-	0x65, 0x12, 0x16, 0x0a, 0x06, 0x67, 0x72, 0x6f, 0x75, 0x70, 0x73, 0x18, 0x01, 0x20, 0x03, 0x28,
-	0x09, 0x52, 0x06, 0x67, 0x72, 0x6f, 0x75, 0x70, 0x73, 0x12, 0x14, 0x0a, 0x05, 0x74, 0x6f, 0x74,
-	0x61, 0x6c, 0x18, 0x02, 0x20, 0x01, 0x28, 0x0d, 0x52, 0x05, 0x74, 0x6f, 0x74, 0x61, 0x6c, 0x22,
+	0x00, 0x12, 0x06, 0x0a, 0x02, 0x49, 0x44, 0x10, 0x68, 0x22, 0x44, 0x0a, 0x0c, 0x45, 0x63, 0x68,
+	0x6f, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x10, 0x0a, 0x03, 0x6d, 0x73, 0x67,
+	0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x03, 0x6d, 0x73, 0x67, 0x22, 0x22, 0x0a, 0x05, 0x4d,
+	0x53, 0x47, 0x49, 0x44, 0x12, 0x11, 0x0a, 0x0d, 0x49, 0x4e, 0x56, 0x41, 0x4c, 0x49, 0x44, 0x5f,
+	0x4d, 0x53, 0x47, 0x49, 0x44, 0x10, 0x00, 0x12, 0x06, 0x0a, 0x02, 0x49, 0x44, 0x10, 0x69, 0x22,
+	0x81, 0x01, 0x0a, 0x15, 0x47, 0x72, 0x6f, 0x75, 0x70, 0x42, 0x72, 0x6f, 0x61, 0x64, 0x63, 0x61,
+	0x73, 0x74, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x14, 0x0a, 0x05, 0x67, 0x72, 0x6f,
+	0x75, 0x70, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x05, 0x67, 0x72, 0x6f, 0x75, 0x70, 0x12,
+	0x14, 0x0a, 0x05, 0x6d, 0x73, 0x67, 0x69, 0x64, 0x18, 0x02, 0x20, 0x01, 0x28, 0x0d, 0x52, 0x05,
+	0x6d, 0x73, 0x67, 0x69, 0x64, 0x12, 0x18, 0x0a, 0x07, 0x6d, 0x73, 0x67, 0x64, 0x61, 0x74, 0x61,
+	0x18, 0x03, 0x20, 0x01, 0x28, 0x0c, 0x52, 0x07, 0x6d, 0x73, 0x67, 0x64, 0x61, 0x74, 0x61, 0x22,
 	0x22, 0x0a, 0x05, 0x4d, 0x53, 0x47, 0x49, 0x44, 0x12, 0x11, 0x0a, 0x0d, 0x49, 0x4e, 0x56, 0x41,
 	0x4c, 0x49, 0x44, 0x5f, 0x4d, 0x53, 0x47, 0x49, 0x44, 0x10, 0x00, 0x12, 0x06, 0x0a, 0x02, 0x49,
-	0x44, 0x10, 0x6f, 0x22, 0x66, 0x0a, 0x12, 0x43, 0x72, 0x65, 0x61, 0x74, 0x65, 0x47, 0x72, 0x6f,
-	0x75, 0x70, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x14, 0x0a, 0x05, 0x67, 0x72, 0x6f,
-	0x75, 0x70, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x05, 0x67, 0x72, 0x6f, 0x75, 0x70, 0x12,
-	0x16, 0x0a, 0x06, 0x69, 0x6e, 0x76, 0x69, 0x74, 0x65, 0x18, 0x02, 0x20, 0x03, 0x28, 0x0d, 0x52,
-	0x06, 0x69, 0x6e, 0x76, 0x69, 0x74, 0x65, 0x22, 0x22, 0x0a, 0x05, 0x4d, 0x53, 0x47, 0x49, 0x44,
-	0x12, 0x11, 0x0a, 0x0d, 0x49, 0x4e, 0x56, 0x41, 0x4c, 0x49, 0x44, 0x5f, 0x4d, 0x53, 0x47, 0x49,
-	0x44, 0x10, 0x00, 0x12, 0x06, 0x0a, 0x02, 0x49, 0x44, 0x10, 0x70, 0x22, 0x4f, 0x0a, 0x13, 0x43,
-	0x72, 0x65, 0x61, 0x74, 0x65, 0x47, 0x72, 0x6f, 0x75, 0x70, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e,
-	0x73, 0x65, 0x12, 0x14, 0x0a, 0x05, 0x67, 0x72, 0x6f, 0x75, 0x70, 0x18, 0x01, 0x20, 0x01, 0x28,
-	0x09, 0x52, 0x05, 0x67, 0x72, 0x6f, 0x75, 0x70, 0x22, 0x22, 0x0a, 0x05, 0x4d, 0x53, 0x47, 0x49,
-	0x44, 0x12, 0x11, 0x0a, 0x0d, 0x49, 0x4e, 0x56, 0x41, 0x4c, 0x49, 0x44, 0x5f, 0x4d, 0x53, 0x47,
-	0x49, 0x44, 0x10, 0x00, 0x12, 0x06, 0x0a, 0x02, 0x49, 0x44, 0x10, 0x71, 0x22, 0x4e, 0x0a, 0x12,
-	0x44, 0x65, 0x6c, 0x65, 0x74, 0x65, 0x47, 0x72, 0x6f, 0x75, 0x70, 0x52, 0x65, 0x71, 0x75, 0x65,
-	0x73, 0x74, 0x12, 0x14, 0x0a, 0x05, 0x67, 0x72, 0x6f, 0x75, 0x70, 0x18, 0x01, 0x20, 0x01, 0x28,
-	0x09, 0x52, 0x05, 0x67, 0x72, 0x6f, 0x75, 0x70, 0x22, 0x22, 0x0a, 0x05, 0x4d, 0x53, 0x47, 0x49,
-	0x44, 0x12, 0x11, 0x0a, 0x0d, 0x49, 0x4e, 0x56, 0x41, 0x4c, 0x49, 0x44, 0x5f, 0x4d, 0x53, 0x47,
-	0x49, 0x44, 0x10, 0x00, 0x12, 0x06, 0x0a, 0x02, 0x49, 0x44, 0x10, 0x72, 0x22, 0x4f, 0x0a, 0x13,
-	0x44, 0x65, 0x6c, 0x65, 0x74, 0x65, 0x47, 0x72, 0x6f, 0x75, 0x70, 0x52, 0x65, 0x73, 0x70, 0x6f,
-	0x6e, 0x73, 0x65, 0x12, 0x14, 0x0a, 0x05, 0x67, 0x72, 0x6f, 0x75, 0x70, 0x18, 0x01, 0x20, 0x01,
-	0x28, 0x09, 0x52, 0x05, 0x67, 0x72, 0x6f, 0x75, 0x70, 0x22, 0x22, 0x0a, 0x05, 0x4d, 0x53, 0x47,
-	0x49, 0x44, 0x12, 0x11, 0x0a, 0x0d, 0x49, 0x4e, 0x56, 0x41, 0x4c, 0x49, 0x44, 0x5f, 0x4d, 0x53,
-	0x47, 0x49, 0x44, 0x10, 0x00, 0x12, 0x06, 0x0a, 0x02, 0x49, 0x44, 0x10, 0x73, 0x22, 0x65, 0x0a,
-	0x11, 0x50, 0x75, 0x74, 0x49, 0x6e, 0x47, 0x72, 0x6f, 0x75, 0x70, 0x52, 0x65, 0x71, 0x75, 0x65,
-	0x73, 0x74, 0x12, 0x14, 0x0a, 0x05, 0x67, 0x72, 0x6f, 0x75, 0x70, 0x18, 0x01, 0x20, 0x01, 0x28,
-	0x09, 0x52, 0x05, 0x67, 0x72, 0x6f, 0x75, 0x70, 0x12, 0x16, 0x0a, 0x06, 0x69, 0x6e, 0x76, 0x69,
-	0x74, 0x65, 0x18, 0x02, 0x20, 0x03, 0x28, 0x0d, 0x52, 0x06, 0x69, 0x6e, 0x76, 0x69, 0x74, 0x65,
-	0x22, 0x22, 0x0a, 0x05, 0x4d, 0x53, 0x47, 0x49, 0x44, 0x12, 0x11, 0x0a, 0x0d, 0x49, 0x4e, 0x56,
-	0x41, 0x4c, 0x49, 0x44, 0x5f, 0x4d, 0x53, 0x47, 0x49, 0x44, 0x10, 0x00, 0x12, 0x06, 0x0a, 0x02,
-	0x49, 0x44, 0x10, 0x74, 0x22, 0xc5, 0x01, 0x0a, 0x12, 0x50, 0x75, 0x74, 0x49, 0x6e, 0x47, 0x72,
-	0x6f, 0x75, 0x70, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x3b, 0x0a, 0x07, 0x65,
-	0x72, 0x72, 0x63, 0x6f, 0x64, 0x65, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0e, 0x32, 0x21, 0x2e, 0x72,
-	0x6f, 0x75, 0x74, 0x65, 0x2e, 0x50, 0x75, 0x74, 0x49, 0x6e, 0x47, 0x72, 0x6f, 0x75, 0x70, 0x52,
-	0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x2e, 0x45, 0x72, 0x72, 0x43, 0x6f, 0x64, 0x65, 0x52,
-	0x07, 0x65, 0x72, 0x72, 0x63, 0x6f, 0x64, 0x65, 0x12, 0x16, 0x0a, 0x06, 0x69, 0x6e, 0x76, 0x69,
-	0x74, 0x65, 0x18, 0x02, 0x20, 0x03, 0x28, 0x0d, 0x52, 0x06, 0x69, 0x6e, 0x76, 0x69, 0x74, 0x65,
-	0x22, 0x22, 0x0a, 0x05, 0x4d, 0x53, 0x47, 0x49, 0x44, 0x12, 0x11, 0x0a, 0x0d, 0x49, 0x4e, 0x56,
-	0x41, 0x4c, 0x49, 0x44, 0x5f, 0x4d, 0x53, 0x47, 0x49, 0x44, 0x10, 0x00, 0x12, 0x06, 0x0a, 0x02,
-	0x49, 0x44, 0x10, 0x75, 0x22, 0x36, 0x0a, 0x07, 0x45, 0x72, 0x72, 0x43, 0x6f, 0x64, 0x65, 0x12,
-	0x06, 0x0a, 0x02, 0x6f, 0x6b, 0x10, 0x00, 0x12, 0x0e, 0x0a, 0x0a, 0x75, 0x6e, 0x6b, 0x6f, 0x77,
-	0x6e, 0x5f, 0x65, 0x72, 0x72, 0x10, 0x01, 0x12, 0x13, 0x0a, 0x0f, 0x67, 0x72, 0x6f, 0x75, 0x70,
-	0x5f, 0x6e, 0x6f, 0x74, 0x5f, 0x66, 0x6f, 0x75, 0x6e, 0x64, 0x10, 0x02, 0x22, 0x74, 0x0a, 0x17,
-	0x4c, 0x69, 0x73, 0x74, 0x47, 0x72, 0x6f, 0x75, 0x70, 0x53, 0x65, 0x73, 0x73, 0x69, 0x6f, 0x6e,
-	0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x14, 0x0a, 0x05, 0x67, 0x72, 0x6f, 0x75, 0x70,
-	0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x05, 0x67, 0x72, 0x6f, 0x75, 0x70, 0x12, 0x1f, 0x0a,
-	0x04, 0x70, 0x61, 0x67, 0x65, 0x18, 0x02, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x0b, 0x2e, 0x72, 0x6f,
-	0x75, 0x74, 0x65, 0x2e, 0x50, 0x61, 0x67, 0x65, 0x52, 0x04, 0x70, 0x61, 0x67, 0x65, 0x22, 0x22,
-	0x0a, 0x05, 0x4d, 0x53, 0x47, 0x49, 0x44, 0x12, 0x11, 0x0a, 0x0d, 0x49, 0x4e, 0x56, 0x41, 0x4c,
-	0x49, 0x44, 0x5f, 0x4d, 0x53, 0x47, 0x49, 0x44, 0x10, 0x00, 0x12, 0x06, 0x0a, 0x02, 0x49, 0x44,
-	0x10, 0x76, 0x22, 0x7d, 0x0a, 0x18, 0x4c, 0x69, 0x73, 0x74, 0x47, 0x72, 0x6f, 0x75, 0x70, 0x53,
-	0x65, 0x73, 0x73, 0x69, 0x6f, 0x6e, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x27,
-	0x0a, 0x06, 0x75, 0x69, 0x6e, 0x66, 0x6f, 0x73, 0x18, 0x01, 0x20, 0x03, 0x28, 0x0b, 0x32, 0x0f,
-	0x2e, 0x72, 0x6f, 0x75, 0x74, 0x65, 0x2e, 0x55, 0x73, 0x65, 0x72, 0x49, 0x6e, 0x66, 0x6f, 0x52,
-	0x06, 0x75, 0x69, 0x6e, 0x66, 0x6f, 0x73, 0x12, 0x14, 0x0a, 0x05, 0x74, 0x6f, 0x74, 0x61, 0x6c,
-	0x18, 0x02, 0x20, 0x01, 0x28, 0x0d, 0x52, 0x05, 0x74, 0x6f, 0x74, 0x61, 0x6c, 0x22, 0x22, 0x0a,
+	0x44, 0x10, 0x6a, 0x22, 0x5b, 0x0a, 0x16, 0x47, 0x72, 0x6f, 0x75, 0x70, 0x42, 0x72, 0x6f, 0x61,
+	0x64, 0x63, 0x61, 0x73, 0x74, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x1d, 0x0a,
+	0x0a, 0x72, 0x65, 0x63, 0x76, 0x5f, 0x63, 0x6f, 0x75, 0x6e, 0x74, 0x18, 0x01, 0x20, 0x01, 0x28,
+	0x0d, 0x52, 0x09, 0x72, 0x65, 0x63, 0x76, 0x43, 0x6f, 0x75, 0x6e, 0x74, 0x22, 0x22, 0x0a, 0x05,
+	0x4d, 0x53, 0x47, 0x49, 0x44, 0x12, 0x11, 0x0a, 0x0d, 0x49, 0x4e, 0x56, 0x41, 0x4c, 0x49, 0x44,
+	0x5f, 0x4d, 0x53, 0x47, 0x49, 0x44, 0x10, 0x00, 0x12, 0x06, 0x0a, 0x02, 0x49, 0x44, 0x10, 0x6b,
+	0x22, 0x4e, 0x0a, 0x10, 0x4a, 0x6f, 0x69, 0x6e, 0x47, 0x72, 0x6f, 0x75, 0x70, 0x52, 0x65, 0x71,
+	0x75, 0x65, 0x73, 0x74, 0x12, 0x16, 0x0a, 0x06, 0x67, 0x72, 0x6f, 0x75, 0x70, 0x73, 0x18, 0x01,
+	0x20, 0x03, 0x28, 0x09, 0x52, 0x06, 0x67, 0x72, 0x6f, 0x75, 0x70, 0x73, 0x22, 0x22, 0x0a, 0x05,
+	0x4d, 0x53, 0x47, 0x49, 0x44, 0x12, 0x11, 0x0a, 0x0d, 0x49, 0x4e, 0x56, 0x41, 0x4c, 0x49, 0x44,
+	0x5f, 0x4d, 0x53, 0x47, 0x49, 0x44, 0x10, 0x00, 0x12, 0x06, 0x0a, 0x02, 0x49, 0x44, 0x10, 0x6c,
+	0x22, 0x4f, 0x0a, 0x11, 0x4a, 0x6f, 0x69, 0x6e, 0x47, 0x72, 0x6f, 0x75, 0x70, 0x52, 0x65, 0x73,
+	0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x16, 0x0a, 0x06, 0x67, 0x72, 0x6f, 0x75, 0x70, 0x73, 0x18,
+	0x01, 0x20, 0x03, 0x28, 0x09, 0x52, 0x06, 0x67, 0x72, 0x6f, 0x75, 0x70, 0x73, 0x22, 0x22, 0x0a,
 	0x05, 0x4d, 0x53, 0x47, 0x49, 0x44, 0x12, 0x11, 0x0a, 0x0d, 0x49, 0x4e, 0x56, 0x41, 0x4c, 0x49,
 	0x44, 0x5f, 0x4d, 0x53, 0x47, 0x49, 0x44, 0x10, 0x00, 0x12, 0x06, 0x0a, 0x02, 0x49, 0x44, 0x10,
-	0x77, 0x42, 0x09, 0x5a, 0x07, 0x2e, 0x2f, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x62, 0x06, 0x70, 0x72,
-	0x6f, 0x74, 0x6f, 0x33,
+	0x6d, 0x22, 0x38, 0x0a, 0x04, 0x50, 0x61, 0x67, 0x65, 0x12, 0x19, 0x0a, 0x08, 0x73, 0x74, 0x61,
+	0x72, 0x74, 0x5f, 0x61, 0x74, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0d, 0x52, 0x07, 0x73, 0x74, 0x61,
+	0x72, 0x74, 0x41, 0x74, 0x12, 0x15, 0x0a, 0x06, 0x65, 0x6e, 0x64, 0x5f, 0x61, 0x74, 0x18, 0x02,
+	0x20, 0x01, 0x28, 0x0d, 0x52, 0x05, 0x65, 0x6e, 0x64, 0x41, 0x74, 0x22, 0x57, 0x0a, 0x10, 0x4c,
+	0x69, 0x73, 0x74, 0x47, 0x72, 0x6f, 0x75, 0x70, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12,
+	0x1f, 0x0a, 0x04, 0x70, 0x61, 0x67, 0x65, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x0b, 0x2e,
+	0x72, 0x6f, 0x75, 0x74, 0x65, 0x2e, 0x50, 0x61, 0x67, 0x65, 0x52, 0x04, 0x70, 0x61, 0x67, 0x65,
+	0x22, 0x22, 0x0a, 0x05, 0x4d, 0x53, 0x47, 0x49, 0x44, 0x12, 0x11, 0x0a, 0x0d, 0x49, 0x4e, 0x56,
+	0x41, 0x4c, 0x49, 0x44, 0x5f, 0x4d, 0x53, 0x47, 0x49, 0x44, 0x10, 0x00, 0x12, 0x06, 0x0a, 0x02,
+	0x49, 0x44, 0x10, 0x6e, 0x22, 0x65, 0x0a, 0x11, 0x4c, 0x69, 0x73, 0x74, 0x47, 0x72, 0x6f, 0x75,
+	0x70, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x16, 0x0a, 0x06, 0x67, 0x72, 0x6f,
+	0x75, 0x70, 0x73, 0x18, 0x01, 0x20, 0x03, 0x28, 0x09, 0x52, 0x06, 0x67, 0x72, 0x6f, 0x75, 0x70,
+	0x73, 0x12, 0x14, 0x0a, 0x05, 0x74, 0x6f, 0x74, 0x61, 0x6c, 0x18, 0x02, 0x20, 0x01, 0x28, 0x0d,
+	0x52, 0x05, 0x74, 0x6f, 0x74, 0x61, 0x6c, 0x22, 0x22, 0x0a, 0x05, 0x4d, 0x53, 0x47, 0x49, 0x44,
+	0x12, 0x11, 0x0a, 0x0d, 0x49, 0x4e, 0x56, 0x41, 0x4c, 0x49, 0x44, 0x5f, 0x4d, 0x53, 0x47, 0x49,
+	0x44, 0x10, 0x00, 0x12, 0x06, 0x0a, 0x02, 0x49, 0x44, 0x10, 0x6f, 0x22, 0x66, 0x0a, 0x12, 0x43,
+	0x72, 0x65, 0x61, 0x74, 0x65, 0x47, 0x72, 0x6f, 0x75, 0x70, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73,
+	0x74, 0x12, 0x14, 0x0a, 0x05, 0x67, 0x72, 0x6f, 0x75, 0x70, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09,
+	0x52, 0x05, 0x67, 0x72, 0x6f, 0x75, 0x70, 0x12, 0x16, 0x0a, 0x06, 0x69, 0x6e, 0x76, 0x69, 0x74,
+	0x65, 0x18, 0x02, 0x20, 0x03, 0x28, 0x0d, 0x52, 0x06, 0x69, 0x6e, 0x76, 0x69, 0x74, 0x65, 0x22,
+	0x22, 0x0a, 0x05, 0x4d, 0x53, 0x47, 0x49, 0x44, 0x12, 0x11, 0x0a, 0x0d, 0x49, 0x4e, 0x56, 0x41,
+	0x4c, 0x49, 0x44, 0x5f, 0x4d, 0x53, 0x47, 0x49, 0x44, 0x10, 0x00, 0x12, 0x06, 0x0a, 0x02, 0x49,
+	0x44, 0x10, 0x70, 0x22, 0x4f, 0x0a, 0x13, 0x43, 0x72, 0x65, 0x61, 0x74, 0x65, 0x47, 0x72, 0x6f,
+	0x75, 0x70, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x14, 0x0a, 0x05, 0x67, 0x72,
+	0x6f, 0x75, 0x70, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x05, 0x67, 0x72, 0x6f, 0x75, 0x70,
+	0x22, 0x22, 0x0a, 0x05, 0x4d, 0x53, 0x47, 0x49, 0x44, 0x12, 0x11, 0x0a, 0x0d, 0x49, 0x4e, 0x56,
+	0x41, 0x4c, 0x49, 0x44, 0x5f, 0x4d, 0x53, 0x47, 0x49, 0x44, 0x10, 0x00, 0x12, 0x06, 0x0a, 0x02,
+	0x49, 0x44, 0x10, 0x71, 0x22, 0x4e, 0x0a, 0x12, 0x44, 0x65, 0x6c, 0x65, 0x74, 0x65, 0x47, 0x72,
+	0x6f, 0x75, 0x70, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x14, 0x0a, 0x05, 0x67, 0x72,
+	0x6f, 0x75, 0x70, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x05, 0x67, 0x72, 0x6f, 0x75, 0x70,
+	0x22, 0x22, 0x0a, 0x05, 0x4d, 0x53, 0x47, 0x49, 0x44, 0x12, 0x11, 0x0a, 0x0d, 0x49, 0x4e, 0x56,
+	0x41, 0x4c, 0x49, 0x44, 0x5f, 0x4d, 0x53, 0x47, 0x49, 0x44, 0x10, 0x00, 0x12, 0x06, 0x0a, 0x02,
+	0x49, 0x44, 0x10, 0x72, 0x22, 0x4f, 0x0a, 0x13, 0x44, 0x65, 0x6c, 0x65, 0x74, 0x65, 0x47, 0x72,
+	0x6f, 0x75, 0x70, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x14, 0x0a, 0x05, 0x67,
+	0x72, 0x6f, 0x75, 0x70, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x05, 0x67, 0x72, 0x6f, 0x75,
+	0x70, 0x22, 0x22, 0x0a, 0x05, 0x4d, 0x53, 0x47, 0x49, 0x44, 0x12, 0x11, 0x0a, 0x0d, 0x49, 0x4e,
+	0x56, 0x41, 0x4c, 0x49, 0x44, 0x5f, 0x4d, 0x53, 0x47, 0x49, 0x44, 0x10, 0x00, 0x12, 0x06, 0x0a,
+	0x02, 0x49, 0x44, 0x10, 0x73, 0x22, 0x65, 0x0a, 0x11, 0x50, 0x75, 0x74, 0x49, 0x6e, 0x47, 0x72,
+	0x6f, 0x75, 0x70, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x14, 0x0a, 0x05, 0x67, 0x72,
+	0x6f, 0x75, 0x70, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x05, 0x67, 0x72, 0x6f, 0x75, 0x70,
+	0x12, 0x16, 0x0a, 0x06, 0x69, 0x6e, 0x76, 0x69, 0x74, 0x65, 0x18, 0x02, 0x20, 0x03, 0x28, 0x0d,
+	0x52, 0x06, 0x69, 0x6e, 0x76, 0x69, 0x74, 0x65, 0x22, 0x22, 0x0a, 0x05, 0x4d, 0x53, 0x47, 0x49,
+	0x44, 0x12, 0x11, 0x0a, 0x0d, 0x49, 0x4e, 0x56, 0x41, 0x4c, 0x49, 0x44, 0x5f, 0x4d, 0x53, 0x47,
+	0x49, 0x44, 0x10, 0x00, 0x12, 0x06, 0x0a, 0x02, 0x49, 0x44, 0x10, 0x74, 0x22, 0xc5, 0x01, 0x0a,
+	0x12, 0x50, 0x75, 0x74, 0x49, 0x6e, 0x47, 0x72, 0x6f, 0x75, 0x70, 0x52, 0x65, 0x73, 0x70, 0x6f,
+	0x6e, 0x73, 0x65, 0x12, 0x3b, 0x0a, 0x07, 0x65, 0x72, 0x72, 0x63, 0x6f, 0x64, 0x65, 0x18, 0x01,
+	0x20, 0x01, 0x28, 0x0e, 0x32, 0x21, 0x2e, 0x72, 0x6f, 0x75, 0x74, 0x65, 0x2e, 0x50, 0x75, 0x74,
+	0x49, 0x6e, 0x47, 0x72, 0x6f, 0x75, 0x70, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x2e,
+	0x45, 0x72, 0x72, 0x43, 0x6f, 0x64, 0x65, 0x52, 0x07, 0x65, 0x72, 0x72, 0x63, 0x6f, 0x64, 0x65,
+	0x12, 0x16, 0x0a, 0x06, 0x69, 0x6e, 0x76, 0x69, 0x74, 0x65, 0x18, 0x02, 0x20, 0x03, 0x28, 0x0d,
+	0x52, 0x06, 0x69, 0x6e, 0x76, 0x69, 0x74, 0x65, 0x22, 0x22, 0x0a, 0x05, 0x4d, 0x53, 0x47, 0x49,
+	0x44, 0x12, 0x11, 0x0a, 0x0d, 0x49, 0x4e, 0x56, 0x41, 0x4c, 0x49, 0x44, 0x5f, 0x4d, 0x53, 0x47,
+	0x49, 0x44, 0x10, 0x00, 0x12, 0x06, 0x0a, 0x02, 0x49, 0x44, 0x10, 0x75, 0x22, 0x36, 0x0a, 0x07,
+	0x45, 0x72, 0x72, 0x43, 0x6f, 0x64, 0x65, 0x12, 0x06, 0x0a, 0x02, 0x6f, 0x6b, 0x10, 0x00, 0x12,
+	0x0e, 0x0a, 0x0a, 0x75, 0x6e, 0x6b, 0x6f, 0x77, 0x6e, 0x5f, 0x65, 0x72, 0x72, 0x10, 0x01, 0x12,
+	0x13, 0x0a, 0x0f, 0x67, 0x72, 0x6f, 0x75, 0x70, 0x5f, 0x6e, 0x6f, 0x74, 0x5f, 0x66, 0x6f, 0x75,
+	0x6e, 0x64, 0x10, 0x02, 0x22, 0x74, 0x0a, 0x17, 0x4c, 0x69, 0x73, 0x74, 0x47, 0x72, 0x6f, 0x75,
+	0x70, 0x53, 0x65, 0x73, 0x73, 0x69, 0x6f, 0x6e, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12,
+	0x14, 0x0a, 0x05, 0x67, 0x72, 0x6f, 0x75, 0x70, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x05,
+	0x67, 0x72, 0x6f, 0x75, 0x70, 0x12, 0x1f, 0x0a, 0x04, 0x70, 0x61, 0x67, 0x65, 0x18, 0x02, 0x20,
+	0x01, 0x28, 0x0b, 0x32, 0x0b, 0x2e, 0x72, 0x6f, 0x75, 0x74, 0x65, 0x2e, 0x50, 0x61, 0x67, 0x65,
+	0x52, 0x04, 0x70, 0x61, 0x67, 0x65, 0x22, 0x22, 0x0a, 0x05, 0x4d, 0x53, 0x47, 0x49, 0x44, 0x12,
+	0x11, 0x0a, 0x0d, 0x49, 0x4e, 0x56, 0x41, 0x4c, 0x49, 0x44, 0x5f, 0x4d, 0x53, 0x47, 0x49, 0x44,
+	0x10, 0x00, 0x12, 0x06, 0x0a, 0x02, 0x49, 0x44, 0x10, 0x76, 0x22, 0x7d, 0x0a, 0x18, 0x4c, 0x69,
+	0x73, 0x74, 0x47, 0x72, 0x6f, 0x75, 0x70, 0x53, 0x65, 0x73, 0x73, 0x69, 0x6f, 0x6e, 0x52, 0x65,
+	0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x27, 0x0a, 0x06, 0x75, 0x69, 0x6e, 0x66, 0x6f, 0x73,
+	0x18, 0x01, 0x20, 0x03, 0x28, 0x0b, 0x32, 0x0f, 0x2e, 0x72, 0x6f, 0x75, 0x74, 0x65, 0x2e, 0x55,
+	0x73, 0x65, 0x72, 0x49, 0x6e, 0x66, 0x6f, 0x52, 0x06, 0x75, 0x69, 0x6e, 0x66, 0x6f, 0x73, 0x12,
+	0x14, 0x0a, 0x05, 0x74, 0x6f, 0x74, 0x61, 0x6c, 0x18, 0x02, 0x20, 0x01, 0x28, 0x0d, 0x52, 0x05,
+	0x74, 0x6f, 0x74, 0x61, 0x6c, 0x22, 0x22, 0x0a, 0x05, 0x4d, 0x53, 0x47, 0x49, 0x44, 0x12, 0x11,
+	0x0a, 0x0d, 0x49, 0x4e, 0x56, 0x41, 0x4c, 0x49, 0x44, 0x5f, 0x4d, 0x53, 0x47, 0x49, 0x44, 0x10,
+	0x00, 0x12, 0x06, 0x0a, 0x02, 0x49, 0x44, 0x10, 0x77, 0x42, 0x09, 0x5a, 0x07, 0x2e, 0x2f, 0x70,
+	0x72, 0x6f, 0x74, 0x6f, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
 }
 
 var (
@@ -2873,81 +2318,65 @@ func file_proto_route_proto_rawDescGZIP() []byte {
 	return file_proto_route_proto_rawDescData
 }
 
-var file_proto_route_proto_enumTypes = make([]protoimpl.EnumInfo, 25)
-var file_proto_route_proto_msgTypes = make([]protoimpl.MessageInfo, 28)
+var file_proto_route_proto_enumTypes = make([]protoimpl.EnumInfo, 19)
+var file_proto_route_proto_msgTypes = make([]protoimpl.MessageInfo, 24)
 var file_proto_route_proto_goTypes = []interface{}{
 	(Error_MSGID)(0),                    // 0: route.Error.MSGID
 	(Echo_MSGID)(0),                     // 1: route.Echo.MSGID
-	(LoginRequest_MSGID)(0),             // 2: route.LoginRequest.MSGID
-	(LoginResponse_MSGID)(0),            // 3: route.LoginResponse.MSGID
-	(LoginResponse_ErrCode)(0),          // 4: route.LoginResponse.ErrCode
-	(AccountLoginRequest_MSGID)(0),      // 5: route.AccountLoginRequest.MSGID
-	(AccountLoginResponse_MSGID)(0),     // 6: route.AccountLoginResponse.MSGID
-	(AccountLoginResponse_ErrCode)(0),   // 7: route.AccountLoginResponse.ErrCode
-	(EchoRequest_MSGID)(0),              // 8: route.EchoRequest.MSGID
-	(EchoResponse_MSGID)(0),             // 9: route.EchoResponse.MSGID
-	(GroupBroadcastRequest_MSGID)(0),    // 10: route.GroupBroadcastRequest.MSGID
-	(GroupBroadcastResponse_MSGID)(0),   // 11: route.GroupBroadcastResponse.MSGID
-	(JoinGroupRequest_MSGID)(0),         // 12: route.JoinGroupRequest.MSGID
-	(JoinGroupResponse_MSGID)(0),        // 13: route.JoinGroupResponse.MSGID
-	(ListGroupRequest_MSGID)(0),         // 14: route.ListGroupRequest.MSGID
-	(ListGroupResponse_MSGID)(0),        // 15: route.ListGroupResponse.MSGID
-	(CreateGroupRequest_MSGID)(0),       // 16: route.CreateGroupRequest.MSGID
-	(CreateGroupResponse_MSGID)(0),      // 17: route.CreateGroupResponse.MSGID
-	(DeleteGroupRequest_MSGID)(0),       // 18: route.DeleteGroupRequest.MSGID
-	(DeleteGroupResponse_MSGID)(0),      // 19: route.DeleteGroupResponse.MSGID
-	(PutInGroupRequest_MSGID)(0),        // 20: route.PutInGroupRequest.MSGID
-	(PutInGroupResponse_MSGID)(0),       // 21: route.PutInGroupResponse.MSGID
-	(PutInGroupResponse_ErrCode)(0),     // 22: route.PutInGroupResponse.ErrCode
-	(ListGroupSessionRequest_MSGID)(0),  // 23: route.ListGroupSessionRequest.MSGID
-	(ListGroupSessionResponse_MSGID)(0), // 24: route.ListGroupSessionResponse.MSGID
-	(*OSInfo)(nil),                      // 25: route.OSInfo
-	(*NetworkInfo)(nil),                 // 26: route.NetworkInfo
-	(*DriverInfo)(nil),                  // 27: route.DriverInfo
-	(*ClientEnvInfo)(nil),               // 28: route.ClientEnvInfo
-	(*UserInfo)(nil),                    // 29: route.UserInfo
-	(*Error)(nil),                       // 30: route.Error
-	(*Echo)(nil),                        // 31: route.Echo
-	(*LoginRequest)(nil),                // 32: route.LoginRequest
-	(*LoginResponse)(nil),               // 33: route.LoginResponse
-	(*AccountLoginRequest)(nil),         // 34: route.AccountLoginRequest
-	(*AccountLoginResponse)(nil),        // 35: route.AccountLoginResponse
-	(*EchoRequest)(nil),                 // 36: route.EchoRequest
-	(*EchoResponse)(nil),                // 37: route.EchoResponse
-	(*GroupBroadcastRequest)(nil),       // 38: route.GroupBroadcastRequest
-	(*GroupBroadcastResponse)(nil),      // 39: route.GroupBroadcastResponse
-	(*JoinGroupRequest)(nil),            // 40: route.JoinGroupRequest
-	(*JoinGroupResponse)(nil),           // 41: route.JoinGroupResponse
-	(*Page)(nil),                        // 42: route.Page
-	(*ListGroupRequest)(nil),            // 43: route.ListGroupRequest
-	(*ListGroupResponse)(nil),           // 44: route.ListGroupResponse
-	(*CreateGroupRequest)(nil),          // 45: route.CreateGroupRequest
-	(*CreateGroupResponse)(nil),         // 46: route.CreateGroupResponse
-	(*DeleteGroupRequest)(nil),          // 47: route.DeleteGroupRequest
-	(*DeleteGroupResponse)(nil),         // 48: route.DeleteGroupResponse
-	(*PutInGroupRequest)(nil),           // 49: route.PutInGroupRequest
-	(*PutInGroupResponse)(nil),          // 50: route.PutInGroupResponse
-	(*ListGroupSessionRequest)(nil),     // 51: route.ListGroupSessionRequest
-	(*ListGroupSessionResponse)(nil),    // 52: route.ListGroupSessionResponse
+	(EchoRequest_MSGID)(0),              // 2: route.EchoRequest.MSGID
+	(EchoResponse_MSGID)(0),             // 3: route.EchoResponse.MSGID
+	(GroupBroadcastRequest_MSGID)(0),    // 4: route.GroupBroadcastRequest.MSGID
+	(GroupBroadcastResponse_MSGID)(0),   // 5: route.GroupBroadcastResponse.MSGID
+	(JoinGroupRequest_MSGID)(0),         // 6: route.JoinGroupRequest.MSGID
+	(JoinGroupResponse_MSGID)(0),        // 7: route.JoinGroupResponse.MSGID
+	(ListGroupRequest_MSGID)(0),         // 8: route.ListGroupRequest.MSGID
+	(ListGroupResponse_MSGID)(0),        // 9: route.ListGroupResponse.MSGID
+	(CreateGroupRequest_MSGID)(0),       // 10: route.CreateGroupRequest.MSGID
+	(CreateGroupResponse_MSGID)(0),      // 11: route.CreateGroupResponse.MSGID
+	(DeleteGroupRequest_MSGID)(0),       // 12: route.DeleteGroupRequest.MSGID
+	(DeleteGroupResponse_MSGID)(0),      // 13: route.DeleteGroupResponse.MSGID
+	(PutInGroupRequest_MSGID)(0),        // 14: route.PutInGroupRequest.MSGID
+	(PutInGroupResponse_MSGID)(0),       // 15: route.PutInGroupResponse.MSGID
+	(PutInGroupResponse_ErrCode)(0),     // 16: route.PutInGroupResponse.ErrCode
+	(ListGroupSessionRequest_MSGID)(0),  // 17: route.ListGroupSessionRequest.MSGID
+	(ListGroupSessionResponse_MSGID)(0), // 18: route.ListGroupSessionResponse.MSGID
+	(*OSInfo)(nil),                      // 19: route.OSInfo
+	(*NetworkInfo)(nil),                 // 20: route.NetworkInfo
+	(*DriverInfo)(nil),                  // 21: route.DriverInfo
+	(*ClientEnvInfo)(nil),               // 22: route.ClientEnvInfo
+	(*UserInfo)(nil),                    // 23: route.UserInfo
+	(*Error)(nil),                       // 24: route.Error
+	(*Echo)(nil),                        // 25: route.Echo
+	(*EchoRequest)(nil),                 // 26: route.EchoRequest
+	(*EchoResponse)(nil),                // 27: route.EchoResponse
+	(*GroupBroadcastRequest)(nil),       // 28: route.GroupBroadcastRequest
+	(*GroupBroadcastResponse)(nil),      // 29: route.GroupBroadcastResponse
+	(*JoinGroupRequest)(nil),            // 30: route.JoinGroupRequest
+	(*JoinGroupResponse)(nil),           // 31: route.JoinGroupResponse
+	(*Page)(nil),                        // 32: route.Page
+	(*ListGroupRequest)(nil),            // 33: route.ListGroupRequest
+	(*ListGroupResponse)(nil),           // 34: route.ListGroupResponse
+	(*CreateGroupRequest)(nil),          // 35: route.CreateGroupRequest
+	(*CreateGroupResponse)(nil),         // 36: route.CreateGroupResponse
+	(*DeleteGroupRequest)(nil),          // 37: route.DeleteGroupRequest
+	(*DeleteGroupResponse)(nil),         // 38: route.DeleteGroupResponse
+	(*PutInGroupRequest)(nil),           // 39: route.PutInGroupRequest
+	(*PutInGroupResponse)(nil),          // 40: route.PutInGroupResponse
+	(*ListGroupSessionRequest)(nil),     // 41: route.ListGroupSessionRequest
+	(*ListGroupSessionResponse)(nil),    // 42: route.ListGroupSessionResponse
 }
 var file_proto_route_proto_depIdxs = []int32{
-	25, // 0: route.ClientEnvInfo.osinfo:type_name -> route.OSInfo
-	26, // 1: route.ClientEnvInfo.network:type_name -> route.NetworkInfo
-	4,  // 2: route.LoginResponse.errcode:type_name -> route.LoginResponse.ErrCode
-	28, // 3: route.LoginResponse.env_report:type_name -> route.ClientEnvInfo
-	29, // 4: route.LoginResponse.uinfo:type_name -> route.UserInfo
-	28, // 5: route.AccountLoginRequest.env_report:type_name -> route.ClientEnvInfo
-	7,  // 6: route.AccountLoginResponse.errcode:type_name -> route.AccountLoginResponse.ErrCode
-	29, // 7: route.AccountLoginResponse.uinfo:type_name -> route.UserInfo
-	42, // 8: route.ListGroupRequest.page:type_name -> route.Page
-	22, // 9: route.PutInGroupResponse.errcode:type_name -> route.PutInGroupResponse.ErrCode
-	42, // 10: route.ListGroupSessionRequest.page:type_name -> route.Page
-	29, // 11: route.ListGroupSessionResponse.uinfos:type_name -> route.UserInfo
-	12, // [12:12] is the sub-list for method output_type
-	12, // [12:12] is the sub-list for method input_type
-	12, // [12:12] is the sub-list for extension type_name
-	12, // [12:12] is the sub-list for extension extendee
-	0,  // [0:12] is the sub-list for field type_name
+	19, // 0: route.ClientEnvInfo.osinfo:type_name -> route.OSInfo
+	20, // 1: route.ClientEnvInfo.network:type_name -> route.NetworkInfo
+	32, // 2: route.ListGroupRequest.page:type_name -> route.Page
+	16, // 3: route.PutInGroupResponse.errcode:type_name -> route.PutInGroupResponse.ErrCode
+	32, // 4: route.ListGroupSessionRequest.page:type_name -> route.Page
+	23, // 5: route.ListGroupSessionResponse.uinfos:type_name -> route.UserInfo
+	6,  // [6:6] is the sub-list for method output_type
+	6,  // [6:6] is the sub-list for method input_type
+	6,  // [6:6] is the sub-list for extension type_name
+	6,  // [6:6] is the sub-list for extension extendee
+	0,  // [0:6] is the sub-list for field type_name
 }
 
 func init() { file_proto_route_proto_init() }
@@ -3041,54 +2470,6 @@ func file_proto_route_proto_init() {
 			}
 		}
 		file_proto_route_proto_msgTypes[7].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*LoginRequest); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_proto_route_proto_msgTypes[8].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*LoginResponse); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_proto_route_proto_msgTypes[9].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*AccountLoginRequest); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_proto_route_proto_msgTypes[10].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*AccountLoginResponse); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_proto_route_proto_msgTypes[11].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*EchoRequest); i {
 			case 0:
 				return &v.state
@@ -3100,7 +2481,7 @@ func file_proto_route_proto_init() {
 				return nil
 			}
 		}
-		file_proto_route_proto_msgTypes[12].Exporter = func(v interface{}, i int) interface{} {
+		file_proto_route_proto_msgTypes[8].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*EchoResponse); i {
 			case 0:
 				return &v.state
@@ -3112,7 +2493,7 @@ func file_proto_route_proto_init() {
 				return nil
 			}
 		}
-		file_proto_route_proto_msgTypes[13].Exporter = func(v interface{}, i int) interface{} {
+		file_proto_route_proto_msgTypes[9].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*GroupBroadcastRequest); i {
 			case 0:
 				return &v.state
@@ -3124,7 +2505,7 @@ func file_proto_route_proto_init() {
 				return nil
 			}
 		}
-		file_proto_route_proto_msgTypes[14].Exporter = func(v interface{}, i int) interface{} {
+		file_proto_route_proto_msgTypes[10].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*GroupBroadcastResponse); i {
 			case 0:
 				return &v.state
@@ -3136,7 +2517,7 @@ func file_proto_route_proto_init() {
 				return nil
 			}
 		}
-		file_proto_route_proto_msgTypes[15].Exporter = func(v interface{}, i int) interface{} {
+		file_proto_route_proto_msgTypes[11].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*JoinGroupRequest); i {
 			case 0:
 				return &v.state
@@ -3148,7 +2529,7 @@ func file_proto_route_proto_init() {
 				return nil
 			}
 		}
-		file_proto_route_proto_msgTypes[16].Exporter = func(v interface{}, i int) interface{} {
+		file_proto_route_proto_msgTypes[12].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*JoinGroupResponse); i {
 			case 0:
 				return &v.state
@@ -3160,7 +2541,7 @@ func file_proto_route_proto_init() {
 				return nil
 			}
 		}
-		file_proto_route_proto_msgTypes[17].Exporter = func(v interface{}, i int) interface{} {
+		file_proto_route_proto_msgTypes[13].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*Page); i {
 			case 0:
 				return &v.state
@@ -3172,7 +2553,7 @@ func file_proto_route_proto_init() {
 				return nil
 			}
 		}
-		file_proto_route_proto_msgTypes[18].Exporter = func(v interface{}, i int) interface{} {
+		file_proto_route_proto_msgTypes[14].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*ListGroupRequest); i {
 			case 0:
 				return &v.state
@@ -3184,7 +2565,7 @@ func file_proto_route_proto_init() {
 				return nil
 			}
 		}
-		file_proto_route_proto_msgTypes[19].Exporter = func(v interface{}, i int) interface{} {
+		file_proto_route_proto_msgTypes[15].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*ListGroupResponse); i {
 			case 0:
 				return &v.state
@@ -3196,7 +2577,7 @@ func file_proto_route_proto_init() {
 				return nil
 			}
 		}
-		file_proto_route_proto_msgTypes[20].Exporter = func(v interface{}, i int) interface{} {
+		file_proto_route_proto_msgTypes[16].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*CreateGroupRequest); i {
 			case 0:
 				return &v.state
@@ -3208,7 +2589,7 @@ func file_proto_route_proto_init() {
 				return nil
 			}
 		}
-		file_proto_route_proto_msgTypes[21].Exporter = func(v interface{}, i int) interface{} {
+		file_proto_route_proto_msgTypes[17].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*CreateGroupResponse); i {
 			case 0:
 				return &v.state
@@ -3220,7 +2601,7 @@ func file_proto_route_proto_init() {
 				return nil
 			}
 		}
-		file_proto_route_proto_msgTypes[22].Exporter = func(v interface{}, i int) interface{} {
+		file_proto_route_proto_msgTypes[18].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*DeleteGroupRequest); i {
 			case 0:
 				return &v.state
@@ -3232,7 +2613,7 @@ func file_proto_route_proto_init() {
 				return nil
 			}
 		}
-		file_proto_route_proto_msgTypes[23].Exporter = func(v interface{}, i int) interface{} {
+		file_proto_route_proto_msgTypes[19].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*DeleteGroupResponse); i {
 			case 0:
 				return &v.state
@@ -3244,7 +2625,7 @@ func file_proto_route_proto_init() {
 				return nil
 			}
 		}
-		file_proto_route_proto_msgTypes[24].Exporter = func(v interface{}, i int) interface{} {
+		file_proto_route_proto_msgTypes[20].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*PutInGroupRequest); i {
 			case 0:
 				return &v.state
@@ -3256,7 +2637,7 @@ func file_proto_route_proto_init() {
 				return nil
 			}
 		}
-		file_proto_route_proto_msgTypes[25].Exporter = func(v interface{}, i int) interface{} {
+		file_proto_route_proto_msgTypes[21].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*PutInGroupResponse); i {
 			case 0:
 				return &v.state
@@ -3268,7 +2649,7 @@ func file_proto_route_proto_init() {
 				return nil
 			}
 		}
-		file_proto_route_proto_msgTypes[26].Exporter = func(v interface{}, i int) interface{} {
+		file_proto_route_proto_msgTypes[22].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*ListGroupSessionRequest); i {
 			case 0:
 				return &v.state
@@ -3280,7 +2661,7 @@ func file_proto_route_proto_init() {
 				return nil
 			}
 		}
-		file_proto_route_proto_msgTypes[27].Exporter = func(v interface{}, i int) interface{} {
+		file_proto_route_proto_msgTypes[23].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*ListGroupSessionResponse); i {
 			case 0:
 				return &v.state
@@ -3298,8 +2679,8 @@ func file_proto_route_proto_init() {
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: file_proto_route_proto_rawDesc,
-			NumEnums:      25,
-			NumMessages:   28,
+			NumEnums:      19,
+			NumMessages:   24,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

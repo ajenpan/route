@@ -6,33 +6,14 @@ import (
 	msg "route/proto"
 )
 
-func (r *Router) OnLoginRequest(ctx context.Context, req *msg.LoginRequest) (*msg.LoginResponse, error) {
-	resp := &msg.LoginResponse{
-		Errcode: msg.LoginResponse_unkown_err,
-	}
-	uinfo, err := r.authToken(req.Token)
-	if err != nil {
-		resp.Errcode = msg.LoginResponse_invalid_token
-		return resp, nil
-	}
-	if olds := r.GetUserSession(uinfo.UID); olds != nil {
-		olds.Close()
-	}
-	s := GetSocketFromCtx(ctx)
-	r.handLoginScuess(s, uinfo)
-	resp.Errcode = msg.LoginResponse_ok
-	return resp, nil
+func (r *Router) OnEcho(ctx context.Context, req *msg.Echo, resp *msg.Echo) error {
+	resp.Body = req.Body
+	return nil
 }
 
-func (r *Router) OnEcho(ctx context.Context, req *msg.Echo) (*msg.Echo, error) {
-	return req, nil
-}
-
-func (r *Router) OnListGroupRequest(ctx context.Context, req *msg.ListGroupRequest) (*msg.ListGroupResponse, error) {
-	resp := &msg.ListGroupResponse{
-		Groups: r.gm.Groups(),
-	}
-	return resp, nil
+func (r *Router) OnListGroupRequest(ctx context.Context, req *msg.ListGroupRequest, resp *msg.ListGroupResponse) error {
+	resp.Groups = r.gm.Groups()
+	return nil
 }
 
 func (r *Router) OnGroupBroadcastRequest(ctx context.Context, req *msg.GroupBroadcastRequest) (*msg.GroupBroadcastResponse, error) {
@@ -64,18 +45,15 @@ func (r *Router) OnGroupBroadcastRequest(ctx context.Context, req *msg.GroupBroa
 	return nil, nil
 }
 
-func (r *Router) OnPutInGroupRequest(ctx context.Context, req *msg.PutInGroupRequest) (*msg.PutInGroupResponse, error) {
-	resp := &msg.PutInGroupResponse{
-		Errcode: msg.PutInGroupResponse_unkown_err,
-	}
+func (r *Router) OnPutInGroupRequest(ctx context.Context, req *msg.PutInGroupRequest, resp *msg.PutInGroupResponse) error {
 	group := r.gm.GetGroup(req.Group)
 	if group == nil {
 		resp.Errcode = msg.PutInGroupResponse_group_not_found
-		return resp, nil
+		return nil
 	}
 
 	for _, uid := range req.Invite {
-		s := r.GetUserSession(uid)
+		s := r.GetUserSession(uint64(uid))
 		if s == nil {
 			continue
 		}
@@ -84,19 +62,18 @@ func (r *Router) OnPutInGroupRequest(ctx context.Context, req *msg.PutInGroupReq
 	}
 
 	resp.Errcode = msg.PutInGroupResponse_ok
-	return resp, nil
+	return nil
 }
 
-func (r *Router) OnListGroupSessionRequest(ctx context.Context, req *msg.ListGroupSessionRequest) (*msg.ListGroupSessionResponse, error) {
-	resp := &msg.ListGroupSessionResponse{}
+func (r *Router) OnListGroupSessionRequest(ctx context.Context, req *msg.ListGroupSessionRequest, resp *msg.ListGroupSessionResponse) error {
 	page := req.Page
 	if page == nil {
-		return nil, &msg.Error{Detail: "page is nil"}
+		return &msg.Error{Detail: "page is nil"}
 	}
 
 	group := r.gm.GetGroup(req.Group)
 	if group == nil {
-		return nil, &msg.Error{
+		return &msg.Error{
 			Detail: "group not found",
 		}
 	}
@@ -117,5 +94,5 @@ func (r *Router) OnListGroupSessionRequest(ctx context.Context, req *msg.ListGro
 			Role:  uinfo.Role,
 		}
 	}
-	return resp, nil
+	return nil
 }

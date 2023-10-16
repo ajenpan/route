@@ -22,7 +22,7 @@ func VerifyToken(pk *rsa.PublicKey, tokenRaw string) (uint32, string, string, er
 	}
 	uidstr := claims["uid"]
 	uname := claims["aud"]
-	role := claims["role"]
+	role := claims["rid"]
 	uid, _ := strconv.ParseUint(uidstr.(string), 10, 64)
 
 	return uint32(uid), uname.(string), role.(string), err
@@ -34,7 +34,7 @@ func GenerateToken(pk *rsa.PrivateKey, uid uint32, uname, role string) (string, 
 	claims["iat"] = time.Now().Unix()
 	claims["uid"] = strconv.FormatUint(uint64(uid), 10)
 	claims["aud"] = uname
-	claims["role"] = role
+	claims["rid"] = role
 	claims["iss"] = "hotwave"
 	claims["sub"] = "auth"
 	token := jwt.NewWithClaims(jwt.SigningMethodRS256, claims)

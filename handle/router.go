@@ -19,7 +19,7 @@ import (
 
 func NewRouter() (*Router, error) {
 	ret := &Router{
-		userSession: make(map[uint32]*tcp.Socket),
+		userSession: make(map[uint64]*tcp.Socket),
 	}
 	ct := calltable.ExtractAsyncMethodByMsgID(msg.File_proto_route_proto.Messages(), ret)
 	if ct == nil {
@@ -38,7 +38,7 @@ type UserInfo struct {
 }
 
 type Router struct {
-	userSession     map[uint32]*tcp.Socket
+	userSession     map[uint64]*tcp.Socket
 	userSessionLock sync.RWMutex
 
 	ct *calltable.CallTable[int]
@@ -60,6 +60,11 @@ var tcpSocketKey = tcpSocketKeyT{}
 var tcpPacketKey = tcpPacketKeyT{}
 
 func (r *Router) OnMessage(s *tcp.Socket, p *tcp.THVPacket) {
+	ptype := p.GetType()
+	if ptype != PacketTypRoute {
+		return
+	}
+
 	var err error
 	defer func() {
 		if err != nil {
@@ -67,48 +72,39 @@ func (r *Router) OnMessage(s *tcp.Socket, p *tcp.THVPacket) {
 		}
 	}()
 
-	ptype := p.GetType()
-
-	if ptype == PacketTypRoute {
-
-		var head RouteHead
-
-		head, err = CastRoutHead(p.GetBody())
-		if err != nil {
-			return
-		}
-		targetid := head.GetTargetUID()
-		if targetid == 0 {
-			r.OnCall(s, p, head, p.GetBody())
-			return
-		}
-
-		suid := s.UID()
-		if suid == 0 {
-			err = fmt.Errorf("session:%v not login", s.ID())
-			return
-		}
-
-		tsocket := r.GetUserSession(targetid)
-		if tsocket == nil {
-			err = fmt.Errorf("targetid:%d not found", targetid)
-			return
-		}
-
-		if !r.forwardEnable(s, tsocket, head.GetMsgID()) {
-			err = fmt.Errorf("forwardEnable failed")
-			return
-		}
-
-		head.SetSrouceUID(suid)
-		err = tsocket.SendPacket(p)
+	var head RouteHead = p.GetHead()
+	targetid := head.GetTargetUID()
+	if targetid == 0 || targetid == r.Selfinfo.UID {
+		r.OnCall(s, p, head, p.GetBody())
+		return
 	}
+
+	tsocket := r.GetUserSession(uint64(targetid))
+	if tsocket == nil {
+		err = fmt.Errorf("targetid:%d not found", targetid)
+		//TODO: send err to source
+		return
+	}
+
+	if !r.forwardEnable(s, tsocket, head.GetMsgID()) {
+		err = fmt.Errorf("forwardEnable failed")
+		return
+	}
+
+	head.SetSrouceUID(uint32(s.UID()))
+	err = tsocket.SendPacket(p)
 }
 
-func (r *Router) OnConn(s *tcp.Socket, stat tcp.SocketStat) {
-	log.Print("OnConn", s.ID(), ",stat:", int(stat))
-
-	if stat == tcp.Disconnected {
+func (r *Router) OnConn(s *tcp.Socket, enable bool) {
+	// TODO: 一个用户重复链接的情况下, 需要按顺序处理
+	if enable {
+		old := r.GetUserSession(s.UID())
+		if old != nil {
+			old.MetaDelete(uinfoKey)
+			old.Close()
+		}
+		r.StoreUserSession(s.UID(), s)
+	} else {
 		uinfo := GetSocketUserInfo(s)
 		if uinfo != nil {
 			r.onUserOffline(s, uinfo)
@@ -116,19 +112,19 @@ func (r *Router) OnConn(s *tcp.Socket, stat tcp.SocketStat) {
 	}
 }
 
-func (r *Router) GetUserSession(uid uint32) *tcp.Socket {
+func (r *Router) GetUserSession(uid uint64) *tcp.Socket {
 	r.userSessionLock.RLock()
 	defer r.userSessionLock.RUnlock()
 	return r.userSession[uid]
 }
 
-func (r *Router) StoreUserSession(uid uint32, s *tcp.Socket) {
+func (r *Router) StoreUserSession(uid uint64, s *tcp.Socket) {
 	r.userSessionLock.Lock()
 	defer r.userSessionLock.Unlock()
 	r.userSession[uid] = s
 }
 
-func (r *Router) RemoveUserSession(uid uint32, s *tcp.Socket) {
+func (r *Router) RemoveUserSession(uid uint64, s *tcp.Socket) {
 	r.userSessionLock.Lock()
 	defer r.userSessionLock.Unlock()
 	if r.userSession[uid] == s {
@@ -137,7 +133,7 @@ func (r *Router) RemoveUserSession(uid uint32, s *tcp.Socket) {
 }
 
 func (r *Router) onUserOnline(s *tcp.Socket, uinfo *UserInfo) {
-	r.StoreUserSession(uinfo.UID, s)
+	r.StoreUserSession(uint64(uinfo.UID), s)
 
 	uinfo.Groups.Range(func(k, v interface{}) bool {
 		r.gm.AddTo(k.(string), uinfo.UID, s)
@@ -152,7 +148,7 @@ func (r *Router) onUserOnline(s *tcp.Socket, uinfo *UserInfo) {
 }
 
 func (r *Router) onUserOffline(s *tcp.Socket, uinfo *UserInfo) {
-	r.RemoveUserSession(uinfo.UID, s)
+	r.RemoveUserSession(uint64(uinfo.UID), s)
 
 	uinfo.Groups.Range(func(k, v interface{}) bool {
 		r.gm.RemoveFromGroup(k.(string), uinfo.UID, s)
@@ -181,15 +177,7 @@ func (r *Router) SendMessage(s *tcp.Socket, askid uint32, msgtyp RouteMsgTyp, m 
 		return fmt.Errorf("not found msgid:%v", msgid)
 	}
 
-	return s.SendPacket(tcp.NewPackFrame(PacketTypRoute, raw))
-	// head := tcp.NewRoutHead()
-	// head.SetMsgID(uint32(msgid))
-	// head.SetSrouceUID(0)
-	// head.SetTargetUID(s.UID())
-	// head.SetAskID(askid)
-	// head.SetMsgTyp(msgtyp)
-
-	// return s.SendPacket(tcp.NewPackFrame(tcp.PacketTypRoute, head, raw))
+	return s.SendPacket(tcp.NewPackFrame(PacketTypRoute, nil, raw))
 }
 
 func (r *Router) OnCall(s *tcp.Socket, p *tcp.THVPacket, head RouteHead, body []byte) {
@@ -276,8 +264,6 @@ func (r *Router) handLoginScuess(s *tcp.Socket, uinfo *UserInfo) {
 	uinfo.LoginAt = time.Now()
 
 	s.MetaStore(uinfoKey, uinfo)
-	s.SetUID(uinfo.UID)
-
 	r.onUserOnline(s, uinfo)
 }
 

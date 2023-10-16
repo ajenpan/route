@@ -7,7 +7,7 @@ import (
 
 const (
 	// customer
-	PacketTypStartAt_ tcp.PacketType = tcp.PacketTypInnerEndAt_ + iota
+	PacketTypStartAt_ tcp.PacketType = tcp.PacketTypeInnerEndAt_ + iota
 	PacketTypRoute
 	PacketTypEndAt_
 )

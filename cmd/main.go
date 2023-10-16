@@ -55,6 +55,7 @@ func StartServer(listenAt string) {
 	if err != nil {
 		panic(err)
 	}
+
 	h, err := handle.NewRouter()
 	if err != nil {
 		panic(err)
@@ -62,11 +63,24 @@ func StartServer(listenAt string) {
 	h.Authc = &auth.LocalAuth{
 		PK: pk,
 	}
+
 	svr, err := tcp.NewServer(tcp.ServerOptions{
 		Address:   listenAt,
 		OnMessage: h.OnMessage,
 		OnConn:    h.OnConn,
+		AuthTokenChecker: func(token string) (*tcp.UserInfo, error) {
+			uid, uname, role, err := auth.VerifyToken(pk, token)
+			if err != nil {
+				return nil, err
+			}
+			return &tcp.UserInfo{
+				UId:   uint64(uid),
+				UName: uname,
+				Role:  role,
+			}, nil
+		},
 	})
+
 	if err != nil {
 		panic(err)
 	}
@@ -79,7 +93,6 @@ func StartServer(listenAt string) {
 }
 
 func main() {
-	// StartClient()
 	StartServer(":14321")
 	signal.WaitShutdown()
 }

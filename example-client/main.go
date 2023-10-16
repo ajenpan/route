@@ -3,9 +3,7 @@ package main
 import (
 	"crypto/rsa"
 	"fmt"
-	"log"
 	"os"
-	"time"
 
 	"route/auth"
 	"route/client"
@@ -62,6 +60,13 @@ func StartClient() {
 		panic(err)
 	}
 	c := client.NewTcpClient("localhost:14321", jwtstr)
+	c.OnConnectFunc = func(c *client.TcpClient, enable bool) {
+		if enable {
+			fmt.Println("client connected")
+		} else {
+			fmt.Println("client disconnected")
+		}
+	}
 	c.OnMessageFunc = func(c *client.TcpClient, p *tcp.THVPacket) {
 		// ptype := p.GetType()
 		// if ptype == PacketTypRoute {
@@ -81,33 +86,7 @@ func StartClient() {
 		// 	}
 		// }
 	}
-	c.OnLoginFunc = func(c *client.TcpClient, stat client.LoginStat) {
-		log.Println("login stat:", stat)
-		if stat == client.LoginStat_Success {
-			go func() {
-				tick := time.NewTicker(2 * time.Second)
-				defer tick.Stop()
-				for range tick.C {
-					var err error
-					sendAt := time.Now()
-					b, err := sendAt.MarshalBinary()
-					if err != nil {
-						break
-					}
-					c.TargetEcho(386951685, []byte(b), func(err error, raw []byte) {
-						fmt.Println("targetecho cost:", time.Since(sendAt))
-					})
-					if err != nil {
-						fmt.Println("echo error:", err)
-						break
-					}
-				}
-				os.Exit(0)
-			}()
-		} else {
-			os.Exit(0)
-		}
-	}
+
 	err = c.Connect()
 	if err != nil {
 		c.AutoRecconect = false

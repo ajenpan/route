@@ -2,10 +2,9 @@ package tcp
 
 import (
 	"net"
+	"sync"
 	"sync/atomic"
 	"time"
-
-	"route/transport"
 )
 
 type SocketStat int32
@@ -15,11 +14,11 @@ const (
 	Connected    SocketStat = iota
 )
 
-var DefaultTimeout = 30 * time.Second
-var DefaultMinTimeout = 1 * time.Second
+var DefaultTimeoutSec = 30
+var DefaultMinTimeoutSec = 10
 
 type OnMessageFunc func(*Socket, *THVPacket)
-type OnConnStatFunc func(*Socket, SocketStat)
+type OnConnStatFunc func(*Socket, bool)
 type NewIDFunc func() string
 
 type SocketOptions struct {
@@ -30,8 +29,8 @@ type SocketOptions struct {
 type SocketOption func(*SocketOptions)
 
 func NewSocket(conn net.Conn, opts SocketOptions) *Socket {
-	if opts.Timeout < DefaultMinTimeout {
-		opts.Timeout = DefaultTimeout
+	if opts.Timeout < time.Duration(DefaultMinTimeoutSec)*time.Second {
+		opts.Timeout = time.Duration(DefaultTimeoutSec) * time.Second
 	}
 
 	ret := &Socket{
@@ -45,32 +44,57 @@ func NewSocket(conn net.Conn, opts SocketOptions) *Socket {
 	return ret
 }
 
+type MapMeta struct {
+	imp sync.Map
+}
+
+func (m *MapMeta) MetaLoad(key string) (interface{}, bool) {
+	return m.imp.Load(key)
+}
+func (m *MapMeta) MetaStore(key string, value interface{}) {
+	m.imp.Store(key, value)
+}
+func (m *MapMeta) MetaDelete(key string) {
+	m.imp.Delete(key)
+}
+
+type UserInfo struct {
+	UId   uint64
+	UName string
+	Role  string
+}
+
+func (u *UserInfo) UID() uint64 {
+	return u.UId
+}
+
+func (u *UserInfo) UserName() string {
+	return u.UName
+}
+
+func (u *UserInfo) UserRole() string {
+	return u.Role
+}
+
 type Socket struct {
-	conn     net.Conn   // low-level conn fd
-	state    SocketStat // current state
-	id       string
-	uid      uint32
+	*UserInfo
+	MapMeta
+
+	conn  net.Conn   // low-level conn fd
+	state SocketStat // current state
+	id    string
+
 	chSend   chan Packet // push message queue
 	chClosed chan bool
 
 	timeOut time.Duration
 
-	lastSendAt uint64
-	lastRecvAt uint64
-
-	transport.MapMeta
+	lastSendAt int64
+	lastRecvAt int64
 }
 
 func (s *Socket) ID() string {
 	return s.id
-}
-
-func (s *Socket) UID() uint32 {
-	return atomic.LoadUint32(&s.uid)
-}
-
-func (s *Socket) SetUID(uid uint32) {
-	atomic.StoreUint32(&s.uid, uid)
 }
 
 func (s *Socket) SendPacket(p Packet) error {
@@ -142,7 +166,7 @@ func (s *Socket) readPacket(p Packet) error {
 		s.conn.SetReadDeadline(time.Now().Add(s.timeOut))
 	}
 	_, err := p.ReadFrom(s.conn)
-	s.lastRecvAt = uint64(time.Now().Unix())
+	s.lastRecvAt = time.Now().Unix()
 	return err
 }
 
@@ -154,6 +178,6 @@ func (s *Socket) writePacket(p Packet) error {
 		s.conn.SetWriteDeadline(time.Now().Add(s.timeOut))
 	}
 	_, err := p.WriteTo(s.conn)
-	s.lastSendAt = uint64(time.Now().Unix())
+	s.lastSendAt = time.Now().Unix()
 	return err
 }

@@ -24,6 +24,7 @@ type ServerOptions struct {
 	OnMessage        OnMessageFunc
 	OnConn           OnConnStatFunc
 	NewIDFunc        NewIDFunc
+	AuthTokenChecker func(string) (*UserInfo, error)
 }
 
 type ServerOption func(*ServerOptions)
@@ -45,10 +46,10 @@ func NewServer(opts ServerOptions) (*Server, error) {
 		ret.opts.OnMessage = func(s *Socket, p *THVPacket) {}
 	}
 	if ret.opts.OnConn == nil {
-		ret.opts.OnConn = func(s *Socket, stat SocketStat) {}
+		ret.opts.OnConn = func(s *Socket, enable bool) {}
 	}
 	if ret.opts.HeatbeatInterval == 0 {
-		ret.opts.HeatbeatInterval = DefaultTimeout
+		ret.opts.HeatbeatInterval = time.Duration(DefaultTimeoutSec) * time.Second
 	}
 	if ret.opts.NewIDFunc == nil {
 		ret.opts.NewIDFunc = nextID
@@ -106,12 +107,12 @@ func (s *Server) Start() error {
 				Timeout: s.opts.HeatbeatInterval,
 			})
 
-			go s.accept(socket)
+			go s.onAccept(socket)
 		}
 	}
 }
 
-func (n *Server) accept(socket *Socket) {
+func (n *Server) onAccept(socket *Socket) {
 	n.wgConns.Add(1)
 	defer n.wgConns.Done()
 	defer socket.Close()
@@ -122,7 +123,7 @@ func (n *Server) accept(socket *Socket) {
 		return
 	}
 
-	if ack.GetType() != PacketTypAck {
+	if ack.GetType() != PacketTypeAck {
 		return
 	}
 
@@ -132,14 +133,35 @@ func (n *Server) accept(socket *Socket) {
 		return
 	}
 
-	// after ack, the connection is established
+	// auth packet
+	ack.Reset()
+	if err := socket.readPacket(ack); err != nil || ack.GetType() != PacketTypeAuth {
+		return
+	}
+
+	// auth token
+	if n.opts.AuthTokenChecker != nil {
+		var err error
+		if socket.UserInfo, err = n.opts.AuthTokenChecker(string(ack.GetBody())); err != nil {
+			ack.Body = []uint8(err.Error())
+			socket.writePacket(ack)
+			return
+		}
+	}
+
+	ack.SetBody([]byte("ok"))
+	if err := socket.writePacket(ack); err != nil {
+		return
+	}
+
+	// the connection is established
 	go socket.writeWork()
 	n.storeSocket(socket)
 	defer n.removeSocket(socket)
 
 	if n.opts.OnConn != nil {
-		n.opts.OnConn(socket, Connected)
-		defer n.opts.OnConn(socket, Disconnected)
+		n.opts.OnConn(socket, true)
+		defer n.opts.OnConn(socket, false)
 	}
 
 	var socketErr error = nil
@@ -152,9 +174,10 @@ func (n *Server) accept(socket *Socket) {
 		}
 
 		typ := p.GetType()
-
-		if typ > PacketTypHeartbeat && typ < PacketTypInnerEndAt_ {
+		if typ <= PacketTypeInnerEndAt_ {
 			switch typ {
+			case PacketTypeHeartbeat:
+				fallthrough
 			case PacketTypeEcho:
 				socket.SendPacket(p)
 			}

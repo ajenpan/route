@@ -10,17 +10,10 @@ import (
 
 	"google.golang.org/protobuf/proto"
 
+	"route/handle"
 	msg "route/proto"
 	"route/transport/tcp"
 	"route/utils/calltable"
-)
-
-type LoginStat int
-
-const (
-	LoginStat_Success    LoginStat = iota
-	LoginStat_Fail       LoginStat = iota
-	LoginStat_Disconnect LoginStat = iota
 )
 
 type OnRespCBFunc func(*TcpClient, *tcp.THVPacket)
@@ -28,15 +21,12 @@ type OnRespCBFunc func(*TcpClient, *tcp.THVPacket)
 type TcpClient struct {
 	*tcp.Client
 
-	isAuth   bool
-	AuthFunc func(c *TcpClient) error
-
 	OnMessageFunc func(c *TcpClient, p *tcp.THVPacket)
-	OnLoginFunc   func(c *TcpClient, stat LoginStat)
+	OnConnectFunc func(c *TcpClient, enable bool)
+
 	AutoRecconect bool
 
 	reconnectTimeDelay time.Duration
-	uinfo              *msg.UserInfo
 
 	cb       sync.Map
 	askidIdx uint32
@@ -218,68 +208,37 @@ func (r *TcpClient) TargetEcho(target uint32, raw []byte, cb func(error, []byte)
 
 func NewTcpClient(remoteAddr, token string) *TcpClient {
 	ret := &TcpClient{
-		AutoRecconect: true,
-	}
-
-	if token != "" {
-		ret.AuthFunc = func(c *TcpClient) error {
-			loginReq := &msg.LoginRequest{Token: token}
-			loginResp := &msg.LoginResponse{}
-			err := c.SyncCall(0, context.Background(), loginReq, loginResp)
-			if err != nil {
-				fmt.Println("login error:", err)
-				return err
-			}
-			if loginResp.Errcode != 0 {
-				fmt.Println("login error:", loginResp.Errcode)
-				return err
-			}
-			ret.uinfo = loginResp.Uinfo
-			return nil
-		}
+		AutoRecconect:      true,
+		reconnectTimeDelay: 15 * time.Second,
 	}
 
 	c := tcp.NewClient(&tcp.ClientOptions{
 		RemoteAddress: remoteAddr,
+		Token:         token,
 		OnMessage: func(s *tcp.Socket, p *tcp.THVPacket) {
-			// ptype := p.GetType()
-			// if ptype == tcp.PacketTypRoute {
-			// 	head, err := tcp.CastRoutHead(p.GetHead())
-			// 	if err != nil {
-			// 		fmt.Println(err)
-			// 		return
-			// 	}
-			// 	if head.GetMsgTyp() == tcp.RouteTypResponse || head.GetMsgTyp() == tcp.RouteTypRespErr {
-			// 		if cb := ret.GetCallback(head.GetAskID()); cb != nil {
-			// 			cb(ret, p)
-			// 		}
-			// 	}
-			// }
-			// ret.OnMessageFunc(ret, p)
-		},
-		OnConnStat: func(s *tcp.Socket, ss tcp.SocketStat) {
-			ret.isAuth = false
-			if ss == tcp.Disconnected {
-				if ret.OnLoginFunc != nil {
-					ret.OnLoginFunc(ret, LoginStat_Disconnect)
+			ptype := p.GetType()
+			if ptype == handle.PacketTypRoute {
+				var head handle.RouteHead = p.GetHead()
+				if head.GetMsgTyp() == handle.RouteTypResponse || head.GetMsgTyp() == handle.RouteTypRespErr {
+					if cb := ret.GetCallback(head.GetAskID()); cb != nil {
+						cb(ret, p)
+					}
 				}
+			}
+
+			if ret.OnMessageFunc != nil {
+				ret.OnMessageFunc(ret, p)
+			}
+		},
+		OnConnStat: func(s *tcp.Socket, enable bool) {
+			if ret.OnConnectFunc != nil {
+				ret.OnConnectFunc(ret, enable)
+			}
+
+			if !enable {
 				if ret.AutoRecconect {
 					ret.Reconnect()
 				}
-			} else {
-				go func() {
-					stat := LoginStat_Fail
-					if ret.AuthFunc != nil {
-						if err := ret.AuthFunc(ret); err == nil {
-							stat = LoginStat_Success
-						} else {
-							fmt.Println("login error:", err)
-						}
-					}
-					if ret.OnLoginFunc != nil {
-						ret.OnLoginFunc(ret, stat)
-					}
-				}()
 			}
 		},
 	})
