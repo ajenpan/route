@@ -9,7 +9,7 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 )
 
-func VerifyToken(pk *rsa.PublicKey, tokenRaw string) (uint32, string, string, error) {
+func VerifyToken(pk *rsa.PublicKey, tokenRaw string) (uint64, string, string, error) {
 	claims := make(jwt.MapClaims)
 	token, err := jwt.ParseWithClaims(tokenRaw, claims, func(t *jwt.Token) (interface{}, error) {
 		return pk, nil
@@ -25,10 +25,10 @@ func VerifyToken(pk *rsa.PublicKey, tokenRaw string) (uint32, string, string, er
 	role := claims["rid"]
 	uid, _ := strconv.ParseUint(uidstr.(string), 10, 64)
 
-	return uint32(uid), uname.(string), role.(string), err
+	return uid, uname.(string), role.(string), err
 }
 
-func GenerateToken(pk *rsa.PrivateKey, uid uint32, uname, role string) (string, error) {
+func GenerateToken(pk *rsa.PrivateKey, uid uint64, uname, role string) (string, error) {
 	claims := make(jwt.MapClaims)
 	claims["exp"] = time.Now().Add(24 * time.Hour).Unix()
 	claims["iat"] = time.Now().Unix()

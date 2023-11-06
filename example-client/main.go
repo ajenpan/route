@@ -5,11 +5,10 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/ajenpan/surf/utils/rsagen"
+	"github.com/ajenpan/surf/utils/signal"
+
 	"route/auth"
-	"route/client"
-	"route/transport/tcp"
-	"route/utils/rsagen"
-	"route/utils/signal"
 )
 
 const PrivateKeyFile = "private.pem"
@@ -59,42 +58,43 @@ func StartClient() {
 	if err != nil {
 		panic(err)
 	}
-	c := client.NewTcpClient("localhost:14321", jwtstr)
-	c.OnConnectFunc = func(c *client.TcpClient, enable bool) {
-		if enable {
-			fmt.Println("client connected")
-		} else {
-			fmt.Println("client disconnected")
-		}
-	}
-	c.OnMessageFunc = func(c *client.TcpClient, p *tcp.THVPacket) {
-		// ptype := p.GetType()
-		// if ptype == PacketTypRoute {
-		// 	head, err := tcp.CastRoutHead(p.GetBody())
-		// 	if err != nil {
-		// 		log.Println(err)
-		// 		return
-		// 	}
-		// 	msgtype := head.GetMsgTyp()
-		// 	msgid := head.GetMsgID()
+	fmt.Println(jwtstr)
+	// c := server.NewTcpClient("localhost:14321", jwtstr)
+	// c.OnConnectFunc = func(c *server.TcpClient, enable bool) {
+	// 	if enable {
+	// 		fmt.Println("client connected")
+	// 	} else {
+	// 		fmt.Println("client disconnected")
+	// 	}
+	// }
+	// c.OnMessageFunc = func(c *server.TcpClient, p *tcp.THVPacket) {
+	// ptype := p.GetType()
+	// if ptype == PacketTypRoute {
+	// 	head, err := tcp.CastRoutHead(p.GetBody())
+	// 	if err != nil {
+	// 		log.Println(err)
+	// 		return
+	// 	}
+	// 	msgtype := head.GetMsgTyp()
+	// 	msgid := head.GetMsgID()
 
-		// 	if msgtype == hand.RouteTypRequest && msgid == uint32(msg.Echo_ID) {
-		// 		head.SetMsgTyp(tcp.RouteTypResponse)
-		// 		head.SetTargetUID(head.GetSrouceUID())
-		// 		c.SendPacket(p)
-		// 		return
-		// 	}
-		// }
-	}
+	// 	if msgtype == hand.RouteTypRequest && msgid == uint32(msg.Echo_ID) {
+	// 		head.SetMsgTyp(tcp.RouteTypResponse)
+	// 		head.SetTargetUID(head.GetSrouceUID())
+	// 		c.SendPacket(p)
+	// 		return
+	// 	}
+	// }
+	// }
 
-	err = c.Connect()
-	if err != nil {
-		c.AutoRecconect = false
-		panic(err)
-	} else {
-		c.AutoRecconect = true
-	}
-	fmt.Println("client connect to ", c.RemoteAddr())
+	// err = c.Connect()
+	// if err != nil {
+	// 	c.AutoRecconect = false
+	// 	panic(err)
+	// } else {
+	// 	c.AutoRecconect = true
+	// }
+	// fmt.Println("client connect to ", c.RemoteAddr())
 }
 
 func main() {

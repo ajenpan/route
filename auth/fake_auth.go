@@ -6,7 +6,7 @@ import (
 )
 
 type FakeAuth struct {
-	c uint32
+	c uint64
 }
 
 func (a *FakeAuth) TokenAuth(token string) (*UserInfo, error) {
@@ -21,10 +21,10 @@ func (a *FakeAuth) TokenAuth(token string) (*UserInfo, error) {
 	}, nil
 }
 
-func (a *FakeAuth) nextID() uint32 {
-	ret := atomic.AddUint32(&a.c, 1)
+func (a *FakeAuth) nextID() uint64 {
+	ret := atomic.AddUint64(&a.c, 1)
 	if ret == 0 {
-		ret = atomic.AddUint32(&a.c, 1)
+		ret = atomic.AddUint64(&a.c, 1)
 	}
 	return ret
 }

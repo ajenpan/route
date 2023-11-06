@@ -2,4 +2,4 @@
 
 ## about route
 
-route is gate server from client to client
+route is wireing up one peer to others

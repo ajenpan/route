@@ -5,37 +5,38 @@ import (
 	"fmt"
 	"hash/fnv"
 
-	"route/transport/tcp"
+	"github.com/ajenpan/surf/server"
+	"github.com/ajenpan/surf/server/tcp"
 )
 
-func GetSocketUserInfo(s *tcp.Socket) *UserInfo {
-	if s == nil {
-		return nil
-	}
-	if v, ok := s.MetaLoad(uinfoKey); ok {
-		return v.(*UserInfo)
-	}
+func GetSocketUserInfo(s server.Session) *UserInfo {
+	// if s == nil {
+	// 	return nil
+	// }
+	// if v, ok := s.MetaLoad(uinfoKey); ok {
+	// 	return v.(*UserInfo)
+	// }
 	return nil
 }
 
-func addSocketErrCnt(s *tcp.Socket) int {
-	if v, ok := s.MetaLoad(errcntKey); ok {
-		cnt := v.(int)
-		cnt++
-		s.MetaStore(errcntKey, cnt)
-		return cnt
-	}
-	s.MetaStore(errcntKey, 1)
+func addSocketErrCnt(s server.Session) int {
+	// if v, ok := s.MetaLoad(errcntKey); ok {
+	// 	cnt := v.(int)
+	// 	cnt++
+	// 	s.MetaStore(errcntKey, cnt)
+	// 	return cnt
+	// }
+	// s.MetaStore(errcntKey, 1)
 	return 1
 }
 
-func dealSocketErrCnt(s *tcp.Socket) {
+func dealSocketErrCnt(s server.Session) {
 	cnt := addSocketErrCnt(s)
 	fmt.Printf("socket:%v, uid:%v, errcnt:%v", s.ID(), s.UID(), cnt)
 }
 
-func GetSocketFromCtx(ctx context.Context) *tcp.Socket {
-	if v, ok := ctx.Value(tcpSocketKey).(*tcp.Socket); ok {
+func GetSocketFromCtx(ctx context.Context) server.Session {
+	if v, ok := ctx.Value(tcpSocketKey).(server.Session); ok {
 		return v
 	}
 	return nil

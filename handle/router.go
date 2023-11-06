@@ -1,27 +1,27 @@
 package handle
 
 import (
-	"context"
 	"fmt"
+	"log"
 	"sync"
 	"time"
 
-	"github.com/rs/zerolog/log"
+	"github.com/ajenpan/surf/logger"
 	"google.golang.org/protobuf/proto"
 
 	"route/auth"
+	"route/msg"
 	"route/permission"
-	msg "route/proto"
-	group "route/sessiongroup"
-	"route/transport/tcp"
-	"route/utils/calltable"
+
+	"github.com/ajenpan/surf/server"
+	"github.com/ajenpan/surf/utils/calltable"
 )
 
 func NewRouter() (*Router, error) {
 	ret := &Router{
-		userSession: make(map[uint64]*tcp.Socket),
+		userSession: make(map[uint64]server.Session),
 	}
-	ct := calltable.ExtractAsyncMethodByMsgID(msg.File_proto_route_proto.Messages(), ret)
+	ct := calltable.ExtractAsyncMethodByMsgID(msg.File_msg_route_proto.Messages(), ret)
 	if ct == nil {
 		return nil, fmt.Errorf("ExtractProtoFile failed")
 	}
@@ -30,7 +30,7 @@ func NewRouter() (*Router, error) {
 }
 
 type UserInfo struct {
-	UID      uint32
+	UID      uint64
 	UserName string
 	Role     string
 	Groups   sync.Map
@@ -38,11 +38,13 @@ type UserInfo struct {
 }
 
 type Router struct {
-	userSession     map[uint64]*tcp.Socket
+	userSession     map[uint64]server.Session
 	userSessionLock sync.RWMutex
 
-	ct *calltable.CallTable[int]
-	gm group.Manager
+	UserSessions *UserSessions
+
+	ct *calltable.CallTable[uint32]
+	// gm session.Groups
 
 	Authc   auth.Auth
 	Permitc permission.Permit
@@ -59,72 +61,70 @@ type tcpPacketKeyT struct{}
 var tcpSocketKey = tcpSocketKeyT{}
 var tcpPacketKey = tcpPacketKeyT{}
 
-func (r *Router) OnMessage(s *tcp.Socket, p *tcp.THVPacket) {
-	ptype := p.GetType()
-	if ptype != PacketTypRoute {
-		return
-	}
-
-	var err error
-	defer func() {
-		if err != nil {
-			log.Print(err)
+func (r *Router) OnSessionStatus(s server.Session, enable bool) {
+	us := r.UserSessions.MustGetSessionMap(s.UID())
+	if enable {
+		if cnt := us.RemoveAll(); cnt > 0 {
+			r.onUserOffline(s.UID())
 		}
-	}()
+		if ok := us.Store(s); ok {
+			r.onUserOnline(s)
+		}
+	} else {
+		if ok := us.Remove(s.ID()); ok {
+			r.onUserOffline(s.UID())
+		}
+	}
+}
 
-	var head RouteHead = p.GetHead()
-	targetid := head.GetTargetUID()
-	if targetid == 0 || targetid == r.Selfinfo.UID {
-		r.OnCall(s, p, head, p.GetBody())
+func (r *Router) OnSessionMessage(s server.Session, msg *server.Message) {
+	// ptype := msg.Meta.MsgType
+	meta := msg.Head
+	if meta.Ttl <= 0 {
 		return
 	}
 
-	tsocket := r.GetUserSession(uint64(targetid))
-	if tsocket == nil {
-		err = fmt.Errorf("targetid:%d not found", targetid)
+	if meta.TargetUid == 0 || meta.TargetUid == r.Selfinfo.UID {
+		//call my self
+		r.OnCall(s, msg)
+		return
+	}
+
+	tsession := r.GetUserSession(meta.TargetUid)
+
+	if tsession == nil {
 		//TODO: send err to source
 		return
 	}
 
-	if !r.forwardEnable(s, tsocket, head.GetMsgID()) {
-		err = fmt.Errorf("forwardEnable failed")
+	if !r.forwardEnable(s, tsession, msg) {
 		return
 	}
 
-	head.SetSrouceUID(uint32(s.UID()))
-	err = tsocket.SendPacket(p)
-}
+	if meta.SourceUid == 0 {
+		meta.SourceUid = s.UID()
+	}
 
-func (r *Router) OnConn(s *tcp.Socket, enable bool) {
-	// TODO: 一个用户重复链接的情况下, 需要按顺序处理
-	if enable {
-		old := r.GetUserSession(s.UID())
-		if old != nil {
-			old.MetaDelete(uinfoKey)
-			old.Close()
-		}
-		r.StoreUserSession(s.UID(), s)
-	} else {
-		uinfo := GetSocketUserInfo(s)
-		if uinfo != nil {
-			r.onUserOffline(s, uinfo)
-		}
+	meta.Ttl--
+	err := s.Send(msg)
+	if err != nil {
+		logger.Error(err)
 	}
 }
 
-func (r *Router) GetUserSession(uid uint64) *tcp.Socket {
+func (r *Router) GetUserSession(uid uint64) server.Session {
 	r.userSessionLock.RLock()
 	defer r.userSessionLock.RUnlock()
 	return r.userSession[uid]
 }
 
-func (r *Router) StoreUserSession(uid uint64, s *tcp.Socket) {
+func (r *Router) StoreUserSession(uid uint64, s server.Session) {
 	r.userSessionLock.Lock()
 	defer r.userSessionLock.Unlock()
 	r.userSession[uid] = s
 }
 
-func (r *Router) RemoveUserSession(uid uint64, s *tcp.Socket) {
+func (r *Router) RemoveUserSession(uid uint64, s server.Session) {
 	r.userSessionLock.Lock()
 	defer r.userSessionLock.Unlock()
 	if r.userSession[uid] == s {
@@ -132,139 +132,140 @@ func (r *Router) RemoveUserSession(uid uint64, s *tcp.Socket) {
 	}
 }
 
-func (r *Router) onUserOnline(s *tcp.Socket, uinfo *UserInfo) {
-	r.StoreUserSession(uint64(uinfo.UID), s)
+func (r *Router) onUserOnline(s server.Session) {
+	// r.StoreUserSession(uint64(uinfo.UID), s)
 
-	uinfo.Groups.Range(func(k, v interface{}) bool {
-		r.gm.AddTo(k.(string), uinfo.UID, s)
-		return true
-	})
+	// uinfo.Groups.Range(func(k, v interface{}) bool {
+	// 	r.gm.AddTo(k.(string), uinfo.UID, s)
+	// 	return true
+	// })
 
-	r.PublishEvent(&msg.UserStatChange{
-		Sid:  s.ID(),
-		Uid:  uinfo.UID,
-		Stat: msg.UserStatChange_Online,
-	})
+	// r.PublishEvent(&msg.UserStatChange{
+	// 	Sid:  s.ID(),
+	// 	Uid:  uinfo.UID,
+	// 	Stat: msg.UserStatChange_Online,
+	// })
 }
 
-func (r *Router) onUserOffline(s *tcp.Socket, uinfo *UserInfo) {
-	r.RemoveUserSession(uint64(uinfo.UID), s)
+func (r *Router) onUserOffline(uid uint64) {
+	// r.RemoveUserSession(uint64(uinfo.UID), s)
 
-	uinfo.Groups.Range(func(k, v interface{}) bool {
-		r.gm.RemoveFromGroup(k.(string), uinfo.UID, s)
-		return true
-	})
+	// uinfo.Groups.Range(func(k, v interface{}) bool {
+	// 	r.gm.RemoveFromGroup(k.(string), uinfo.UID, s)
+	// 	return true
+	// })
 
-	r.PublishEvent(&msg.UserStatChange{
-		Sid:  s.ID(),
-		Uid:  uinfo.UID,
-		Stat: msg.UserStatChange_Offline,
-	})
+	// r.PublishEvent(&msg.UserStatChange{
+	// 	Sid:  s.ID(),
+	// 	Uid:  uinfo.UID,
+	// 	Stat: msg.UserStatChange_Offline,
+	// })
 }
 
 func (r *Router) PublishEvent(event proto.Message) {
 	log.Printf("[Mock PublishEvent] name:%v, msg:%v\n", string(proto.MessageName(event).Name()), event)
 }
 
-func (r *Router) SendMessage(s *tcp.Socket, askid uint32, msgtyp RouteMsgTyp, m proto.Message) error {
-	raw, err := proto.Marshal(m)
-	if err != nil {
-		return fmt.Errorf("marshal failed:%v", err)
-	}
+func (r *Router) SendMessage(s server.Session, askid uint32, msgtyp server.RouteMsgTyp, m proto.Message) error {
+	// raw, err := proto.Marshal(m)
+	// if err != nil {
+	// 	return fmt.Errorf("marshal failed:%v", err)
+	// }
 
-	msgid := calltable.GetMessageMsgID(m)
-	if msgid == 0 {
-		return fmt.Errorf("not found msgid:%v", msgid)
-	}
+	// msgid := calltable.GetMessageMsgID(m)
+	// if msgid == 0 {
+	// 	return fmt.Errorf("not found msgid:%v", msgid)
+	// }
 
-	return s.SendPacket(tcp.NewPackFrame(PacketTypRoute, nil, raw))
+	// return s.SendPacket(tcp.NewPackFrame(PacketTypRoute, nil, raw))
+	return nil
 }
 
-func (r *Router) OnCall(s *tcp.Socket, p *tcp.THVPacket, head RouteHead, body []byte) {
-	var err error
+func (r *Router) OnCall(s server.Session, msg *server.Message) {
+	// var err error
 
-	msgid := int(head.GetMsgID())
+	// msgid := int(head.GetMsgID())
 
-	enable := r.callEnable(s, uint32(msgid))
-	if !enable {
-		log.Print("not enable to call this method:", msgid)
-		dealSocketErrCnt(s)
-		return
-	}
+	// enable := r.callEnable(s, uint32(msgid))
+	// if !enable {
+	// 	log.Print("not enable to call this method:", msgid)
+	// 	dealSocketErrCnt(s)
+	// 	return
+	// }
 
-	askid := head.GetAskID()
-	method := r.ct.Get(msgid)
-	if method == nil {
-		log.Print("not found method,msgid:", msgid)
-		dealSocketErrCnt(s)
-		return
-	}
+	// askid := head.GetAskID()
+	// method := r.ct.Get(msgid)
+	// if method == nil {
+	// 	log.Print("not found method,msgid:", msgid)
+	// 	dealSocketErrCnt(s)
+	// 	return
+	// }
 
-	reqRaw := method.NewRequest()
-	if reqRaw == nil {
-		log.Print("not found request,msgid:", msgid)
-		return
-	}
+	// reqRaw := method.NewRequest()
+	// if reqRaw == nil {
+	// 	log.Print("not found request,msgid:", msgid)
+	// 	return
+	// }
 
-	req := reqRaw.(proto.Message)
-	err = proto.Unmarshal(body, req)
+	// req := reqRaw.(proto.Message)
+	// err = proto.Unmarshal(body, req)
 
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
+	// if err != nil {
+	// 	fmt.Println(err)
+	// 	return
+	// }
 
-	ctx := context.WithValue(context.Background(), tcpSocketKey, s)
-	ctx = context.WithValue(ctx, tcpPacketKey, p)
+	// ctx := context.WithValue(context.Background(), tcpSocketKey, s)
+	// ctx = context.WithValue(ctx, tcpPacketKey, p)
 
-	result := method.Call(r, ctx, req)
+	// result := method.Call(r, ctx, req)
 
-	if len(result) != 2 {
-		return
-	}
-	// if err is not nil, only return err
-	resperrI := result[1].Interface()
-	if resperrI != nil {
-		var senderr error
-		switch resperr := resperrI.(type) {
-		case *msg.Error:
-			senderr = r.SendMessage(s, askid, RouteTypRespErr, resperr)
-		case error:
-			senderr = r.SendMessage(s, askid, RouteTypRespErr, &msg.Error{
-				Code:   -1,
-				Detail: resperr.Error(),
-			})
-		default:
-			log.Print("not support error type:")
-		}
-		if senderr != nil {
-			log.Print("send err failed:", senderr)
-		}
-		return
-	}
+	// if len(result) != 2 {
+	// 	return
+	// }
+	// // if err is not nil, only return err
+	// resperrI := result[1].Interface()
+	// if resperrI != nil {
+	// 	var senderr error
+	// 	switch resperr := resperrI.(type) {
+	// 	case *msg.Error:
+	// 		senderr = r.SendMessage(s, askid, RouteTypRespErr, resperr)
+	// 	case error:
+	// 		senderr = r.SendMessage(s, askid, RouteTypRespErr, &msg.Error{
+	// 			Code:   -1,
+	// 			Detail: resperr.Error(),
+	// 		})
+	// 	default:
+	// 		log.Print("not support error type:")
+	// 	}
+	// 	if senderr != nil {
+	// 		log.Print("send err failed:", senderr)
+	// 	}
+	// 	return
+	// }
 
-	respI := result[0].Interface()
-	if respI != nil {
-		resp, ok := respI.(proto.Message)
-		if !ok {
-			return
-		}
-		respMsgTyp := head.GetMsgTyp()
-		if respMsgTyp == RouteTypRequest {
-			respMsgTyp = RouteTypResponse
-		}
+	// respI := result[0].Interface()
+	// if respI != nil {
+	// 	resp, ok := respI.(proto.Message)
+	// 	if !ok {
+	// 		return
+	// 	}
+	// 	respMsgTyp := head.GetMsgTyp()
+	// 	if respMsgTyp == RouteTypRequest {
+	// 		respMsgTyp = RouteTypResponse
+	// 	}
 
-		r.SendMessage(s, askid, respMsgTyp, resp)
-		log.Printf("oncall sid:%v,uid:%v,msgid:%v,askid:%v,req:%v,resp:%v\n", s.ID(), s.UID(), msgid, askid, req, resp)
-		return
-	}
+	// 	r.SendMessage(s, askid, respMsgTyp, resp)
+	// 	log.Printf("oncall sid:%v,uid:%v,msgid:%v,askid:%v,req:%v,resp:%v\n", s.ID(), s.UID(), msgid, askid, req, resp)
+	// 	return
+	// }
 }
 
-func (r *Router) handLoginScuess(s *tcp.Socket, uinfo *UserInfo) {
+func (r *Router) handLoginScuess(s server.Session, uinfo *UserInfo) {
 	uinfo.LoginAt = time.Now()
 
-	s.MetaStore(uinfoKey, uinfo)
-	r.onUserOnline(s, uinfo)
+	// s.MetaStore(uinfoKey, uinfo)
+	// r.onUserOnline(s, uinfo)
 }
 
 func (r *Router) authToken(token string) (*UserInfo, error) {
@@ -298,25 +299,27 @@ func (r *Router) roleGroups(role string) []string {
 	return r.Permitc.RoleGroups(role)
 }
 
-func (r *Router) callEnable(s *tcp.Socket, msgid uint32) bool {
-	if r.Permitc == nil {
-		return true
-	}
-	uinfo := GetSocketUserInfo(s)
-	if uinfo == nil {
-		return false
-	}
-	return r.Permitc.CallEnable(uinfo.Role, msgid)
+func (r *Router) callEnable(s server.Session, msgid uint32) bool {
+	// if r.Permitc == nil {
+	// 	return true
+	// }
+	// uinfo := GetSocketUserInfo(s)
+	// if uinfo == nil {
+	// 	return false
+	// }
+	// return r.Permitc.CallEnable(uinfo.Role, msgid)
+	return false
 }
 
-func (r *Router) forwardEnable(s *tcp.Socket, target *tcp.Socket, msgid uint32) bool {
-	if r.Permitc == nil {
-		return true
-	}
-	suinfo := GetSocketUserInfo(s)
-	tuinfo := GetSocketUserInfo(target)
-	if suinfo == nil || tuinfo == nil {
-		return false
-	}
-	return r.Permitc.ForwardEnable(suinfo.Role, tuinfo.Role, msgid)
+func (r *Router) forwardEnable(s server.Session, target server.Session, msg *server.Message) bool {
+	// if r.Permitc == nil {
+	// 	return true
+	// }
+	// suinfo := GetSocketUserInfo(s)
+	// tuinfo := GetSocketUserInfo(target)
+	// if suinfo == nil || tuinfo == nil {
+	// 	return false
+	// }
+	// return r.Permitc.ForwardEnable(suinfo.Role, tuinfo.Role, msgid)
+	return true
 }

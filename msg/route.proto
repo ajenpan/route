@@ -2,7 +2,7 @@ syntax = "proto3";
 
 package route;
 
-option go_package = "./proto";
+option go_package = "/msg";
 
 message OSInfo {
   string name = 1;
@@ -30,15 +30,6 @@ message UserInfo {
   string role = 3;
   repeated string groups = 4;
 }
-
-message Error {
-  enum MSGID {
-    INVALID_MSGID = 0;
-    ID = 98;
-  }
-  int32 code = 2;
-  string detail = 3;
-};
 
 message Echo {
   enum MSGID {
@@ -193,4 +184,10 @@ message ListGroupSessionResponse {
   }
   repeated UserInfo uinfos = 1;
   uint32 total = 2;
+}
+
+
+// events
+message EventSessionStatChange {
+  
 }

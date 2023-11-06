@@ -1,7 +1,7 @@
 package auth
 
 type UserInfo struct {
-	ID   uint32
+	ID   uint64
 	Name string
 	Role string
 }

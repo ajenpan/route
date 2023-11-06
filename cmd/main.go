@@ -1,15 +1,20 @@
 package main
 
 import (
+	"bytes"
 	"crypto/rsa"
 	"fmt"
 	"os"
+	"runtime"
 
 	"route/auth"
 	"route/handle"
-	"route/transport/tcp"
-	"route/utils/rsagen"
-	"route/utils/signal"
+
+	"github.com/ajenpan/surf/server"
+	"github.com/ajenpan/surf/utils/rsagen"
+	"github.com/ajenpan/surf/utils/signal"
+
+	"github.com/urfave/cli/v2"
 )
 
 const PrivateKeyFile = "private.pem"
@@ -55,7 +60,6 @@ func StartServer(listenAt string) {
 	if err != nil {
 		panic(err)
 	}
-
 	h, err := handle.NewRouter()
 	if err != nil {
 		panic(err)
@@ -63,36 +67,58 @@ func StartServer(listenAt string) {
 	h.Authc = &auth.LocalAuth{
 		PK: pk,
 	}
-
-	svr, err := tcp.NewServer(tcp.ServerOptions{
-		Address:   listenAt,
-		OnMessage: h.OnMessage,
-		OnConn:    h.OnConn,
-		AuthTokenChecker: func(token string) (*tcp.UserInfo, error) {
-			uid, uname, role, err := auth.VerifyToken(pk, token)
-			if err != nil {
-				return nil, err
-			}
-			return &tcp.UserInfo{
-				UId:   uint64(uid),
-				UName: uname,
-				Role:  role,
-			}, nil
-		},
-	})
-
+	svr, err := server.NewTcpServer(listenAt, h)
 	if err != nil {
 		panic(err)
 	}
 
 	defer svr.Stop()
-	fmt.Println("server started,listening on", svr.Address())
+	fmt.Println("server started,listening on: ", listenAt)
 	go svr.Start()
 
 	signal.WaitShutdown()
 }
 
 func main() {
+	if err := Run(); err != nil {
+		fmt.Println(err)
+	}
+}
+
+var (
+	Name       string = "battlefield"
+	Version    string = "unknow"
+	GitCommit  string = "unknow"
+	BuildAt    string = "unknow"
+	BuildBy    string = runtime.Version()
+	RunnningOS string = runtime.GOOS + "/" + runtime.GOARCH
+)
+
+func longVersion() string {
+	buf := bytes.NewBuffer(nil)
+	fmt.Fprintln(buf, "project:", Name)
+	fmt.Fprintln(buf, "version:", Version)
+	fmt.Fprintln(buf, "git commit:", GitCommit)
+	fmt.Fprintln(buf, "build at:", BuildAt)
+	fmt.Fprintln(buf, "build by:", BuildBy)
+	fmt.Fprintln(buf, "running OS/Arch:", RunnningOS)
+	return buf.String()
+}
+
+func Run() error {
+	cli.VersionPrinter = func(c *cli.Context) {
+		fmt.Println(longVersion())
+	}
+	app := cli.NewApp()
+	app.Version = Version
+	app.Name = Name
+	app.Action = RealMain
+	err := app.Run(os.Args)
+	return err
+}
+
+func RealMain(c *cli.Context) error {
 	StartServer(":14321")
 	signal.WaitShutdown()
+	return nil
 }
