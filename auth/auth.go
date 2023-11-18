@@ -1,11 +1,17 @@
 package auth
 
 type UserInfo struct {
-	ID   uint64
-	Name string
-	Role string
+	UId   uint64
+	UName string
+	URole string
 }
 
-type Auth interface {
-	TokenAuth(token string) (*UserInfo, error)
+func (u *UserInfo) UserID() uint64 {
+	return u.UId
+}
+func (u *UserInfo) UserRole() string {
+	return u.URole
+}
+func (u *UserInfo) UserName() string {
+	return u.UName
 }

@@ -4,12 +4,13 @@ import (
 	"context"
 	"fmt"
 	"hash/fnv"
+	"route/auth"
 
-	"github.com/ajenpan/surf/server"
-	"github.com/ajenpan/surf/server/tcp"
+	"route/server"
+	"route/server/tcp"
 )
 
-func GetSocketUserInfo(s server.Session) *UserInfo {
+func GetSocketUserInfo(s server.Session) *auth.UserInfo {
 	// if s == nil {
 	// 	return nil
 	// }
@@ -32,7 +33,7 @@ func addSocketErrCnt(s server.Session) int {
 
 func dealSocketErrCnt(s server.Session) {
 	cnt := addSocketErrCnt(s)
-	fmt.Printf("socket:%v, uid:%v, errcnt:%v", s.ID(), s.UID(), cnt)
+	fmt.Printf("socket:%v, uid:%v, errcnt:%v", s.SessionID(), s.UserID(), cnt)
 }
 
 func GetSocketFromCtx(ctx context.Context) server.Session {

@@ -1,59 +1,32 @@
 package handle
 
 import (
-	"fmt"
 	"log"
 	"sync"
-	"time"
 
-	"github.com/ajenpan/surf/logger"
 	"google.golang.org/protobuf/proto"
 
 	"route/auth"
-	"route/msg"
-	"route/permission"
-
-	"github.com/ajenpan/surf/server"
-	"github.com/ajenpan/surf/utils/calltable"
+	"route/server"
 )
 
 func NewRouter() (*Router, error) {
 	ret := &Router{
 		userSession: make(map[uint64]server.Session),
+		// UserSessions :
 	}
-	ct := calltable.ExtractAsyncMethodByMsgID(msg.File_msg_route_proto.Messages(), ret)
-	if ct == nil {
-		return nil, fmt.Errorf("ExtractProtoFile failed")
-	}
-	ret.ct = ct
-	return ret, nil
-}
 
-type UserInfo struct {
-	UID      uint64
-	UserName string
-	Role     string
-	Groups   sync.Map
-	LoginAt  time.Time
+	return ret, nil
 }
 
 type Router struct {
 	userSession     map[uint64]server.Session
 	userSessionLock sync.RWMutex
 
-	UserSessions *UserSessions
+	// UserSessions *UserSessions
 
-	ct *calltable.CallTable[uint32]
-	// gm session.Groups
-
-	Authc   auth.Auth
-	Permitc permission.Permit
-
-	Selfinfo *UserInfo
+	Selfinfo *auth.UserInfo
 }
-
-const uinfoKey string = "uinfo"
-const errcntKey string = "errcnt"
 
 type tcpSocketKeyT struct{}
 type tcpPacketKeyT struct{}
@@ -62,53 +35,50 @@ var tcpSocketKey = tcpSocketKeyT{}
 var tcpPacketKey = tcpPacketKeyT{}
 
 func (r *Router) OnSessionStatus(s server.Session, enable bool) {
-	us := r.UserSessions.MustGetSessionMap(s.UID())
+	currSession := r.GetUserSession(s.UserID())
 	if enable {
-		if cnt := us.RemoveAll(); cnt > 0 {
-			r.onUserOffline(s.UID())
+		if currSession != nil {
+			r.RemoveUserSession(s.UserID())
+			r.onUserOffline(currSession)
 		}
-		if ok := us.Store(s); ok {
-			r.onUserOnline(s)
-		}
+		r.StoreUserSession(s.UserID(), s)
+		r.onUserOnline(s)
 	} else {
-		if ok := us.Remove(s.ID()); ok {
-			r.onUserOffline(s.UID())
+		if currSession != nil && currSession == s {
+			r.RemoveUserSession(s.UserID())
+			r.onUserOffline(currSession)
 		}
 	}
 }
 
-func (r *Router) OnSessionMessage(s server.Session, msg *server.Message) {
-	// ptype := msg.Meta.MsgType
-	meta := msg.Head
-	if meta.Ttl <= 0 {
+func (r *Router) OnSessionMessage(s server.Session, m *server.Message) {
+	if m.ContentType != server.ProtoBinaryRoute {
 		return
 	}
+	var err error
 
-	if meta.TargetUid == 0 || meta.TargetUid == r.Selfinfo.UID {
+	head := m.Head
+	if head.Uid == 0 || head.Uid == r.Selfinfo.UserID() {
 		//call my self
-		r.OnCall(s, msg)
+		r.OnCall(s, m)
 		return
 	}
 
-	tsession := r.GetUserSession(meta.TargetUid)
-
-	if tsession == nil {
+	targetSess := r.GetUserSession(head.Uid)
+	if targetSess == nil {
 		//TODO: send err to source
+		log.Println("session not found")
 		return
 	}
 
-	if !r.forwardEnable(s, tsession, msg) {
+	if !r.forwardEnable(s, targetSess, m) {
 		return
 	}
 
-	if meta.SourceUid == 0 {
-		meta.SourceUid = s.UID()
-	}
-
-	meta.Ttl--
-	err := s.Send(msg)
+	head.Uid = s.UserID()
+	err = s.Send(m)
 	if err != nil {
-		logger.Error(err)
+		log.Println(err)
 	}
 }
 
@@ -124,17 +94,13 @@ func (r *Router) StoreUserSession(uid uint64, s server.Session) {
 	r.userSession[uid] = s
 }
 
-func (r *Router) RemoveUserSession(uid uint64, s server.Session) {
+func (r *Router) RemoveUserSession(uid uint64) {
 	r.userSessionLock.Lock()
 	defer r.userSessionLock.Unlock()
-	if r.userSession[uid] == s {
-		delete(r.userSession, uid)
-	}
+	delete(r.userSession, uid)
 }
 
 func (r *Router) onUserOnline(s server.Session) {
-	// r.StoreUserSession(uint64(uinfo.UID), s)
-
 	// uinfo.Groups.Range(func(k, v interface{}) bool {
 	// 	r.gm.AddTo(k.(string), uinfo.UID, s)
 	// 	return true
@@ -147,9 +113,7 @@ func (r *Router) onUserOnline(s server.Session) {
 	// })
 }
 
-func (r *Router) onUserOffline(uid uint64) {
-	// r.RemoveUserSession(uint64(uinfo.UID), s)
-
+func (r *Router) onUserOffline(s server.Session) {
 	// uinfo.Groups.Range(func(k, v interface{}) bool {
 	// 	r.gm.RemoveFromGroup(k.(string), uinfo.UID, s)
 	// 	return true
@@ -166,7 +130,7 @@ func (r *Router) PublishEvent(event proto.Message) {
 	log.Printf("[Mock PublishEvent] name:%v, msg:%v\n", string(proto.MessageName(event).Name()), event)
 }
 
-func (r *Router) SendMessage(s server.Session, askid uint32, msgtyp server.RouteMsgTyp, m proto.Message) error {
+func (r *Router) SendMessage(s server.Session, askid uint32, msgtyp server.ContentType, m proto.Message) error {
 	// raw, err := proto.Marshal(m)
 	// if err != nil {
 	// 	return fmt.Errorf("marshal failed:%v", err)
@@ -183,6 +147,11 @@ func (r *Router) SendMessage(s server.Session, askid uint32, msgtyp server.Route
 
 func (r *Router) OnCall(s server.Session, msg *server.Message) {
 	// var err error
+
+	switch msg.Head.Msgname {
+	case "":
+
+	}
 
 	// msgid := int(head.GetMsgID())
 
@@ -261,60 +230,7 @@ func (r *Router) OnCall(s server.Session, msg *server.Message) {
 	// }
 }
 
-func (r *Router) handLoginScuess(s server.Session, uinfo *UserInfo) {
-	uinfo.LoginAt = time.Now()
-
-	// s.MetaStore(uinfoKey, uinfo)
-	// r.onUserOnline(s, uinfo)
-}
-
-func (r *Router) authToken(token string) (*UserInfo, error) {
-	if r.Authc == nil {
-		return nil, fmt.Errorf("auth is nil")
-	}
-
-	baseinfo, err := r.Authc.TokenAuth(token)
-	if err != nil {
-		return nil, err
-	}
-
-	uinfo := &UserInfo{
-		UID:      baseinfo.ID,
-		UserName: baseinfo.Name,
-		Role:     baseinfo.Role,
-		LoginAt:  time.Now(),
-	}
-
-	groups := r.roleGroups(baseinfo.Role)
-	for _, v := range groups {
-		uinfo.Groups.Store(v, struct{}{})
-	}
-	return uinfo, nil
-}
-
-func (r *Router) roleGroups(role string) []string {
-	if r.Permitc == nil {
-		return nil
-	}
-	return r.Permitc.RoleGroups(role)
-}
-
-func (r *Router) callEnable(s server.Session, msgid uint32) bool {
-	// if r.Permitc == nil {
-	// 	return true
-	// }
-	// uinfo := GetSocketUserInfo(s)
-	// if uinfo == nil {
-	// 	return false
-	// }
-	// return r.Permitc.CallEnable(uinfo.Role, msgid)
-	return false
-}
-
 func (r *Router) forwardEnable(s server.Session, target server.Session, msg *server.Message) bool {
-	// if r.Permitc == nil {
-	// 	return true
-	// }
 	// suinfo := GetSocketUserInfo(s)
 	// tuinfo := GetSocketUserInfo(target)
 	// if suinfo == nil || tuinfo == nil {

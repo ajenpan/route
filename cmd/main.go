@@ -6,13 +6,12 @@ import (
 	"fmt"
 	"os"
 	"runtime"
+	"syscall"
 
-	"route/auth"
 	"route/handle"
+	"route/server"
 
-	"github.com/ajenpan/surf/server"
-	"github.com/ajenpan/surf/utils/rsagen"
-	"github.com/ajenpan/surf/utils/signal"
+	"os/signal"
 
 	"github.com/urfave/cli/v2"
 )
@@ -23,7 +22,7 @@ const PublicKeyFile = "public.pem"
 func ReadRSAKey() ([]byte, []byte, error) {
 	privateRaw, err := os.ReadFile(PrivateKeyFile)
 	if err != nil {
-		privateKey, publicKey, err := rsagen.GenerateRsaPem(2048)
+		privateKey, publicKey, err := GenerateRsaPem(512)
 		if err != nil {
 			return nil, nil, err
 		}
@@ -43,15 +42,21 @@ func LoadAuthKey() (*rsa.PrivateKey, *rsa.PublicKey, error) {
 	if err != nil {
 		return nil, nil, err
 	}
-	pr, err := rsagen.ParseRsaPrivateKeyFromPem(rawpr)
+	pr, err := ParseRsaPrivateKeyFromPem(rawpr)
 	if err != nil {
 		return nil, nil, err
 	}
-	pu, err := rsagen.ParseRsaPublicKeyFromPem(rawpu)
+	pu, err := ParseRsaPublicKeyFromPem(rawpu)
 	if err != nil {
 		return nil, nil, err
 	}
 	return pr, pu, nil
+}
+
+func WaitShutdown() os.Signal {
+	signals := make(chan os.Signal, 1)
+	signal.Notify(signals, syscall.SIGTERM, syscall.SIGINT, syscall.SIGQUIT)
+	return <-signals
 }
 
 func StartServer(listenAt string) {
@@ -64,19 +69,22 @@ func StartServer(listenAt string) {
 	if err != nil {
 		panic(err)
 	}
-	h.Authc = &auth.LocalAuth{
-		PK: pk,
+	svropt := &server.TcpServerOptions{
+		AuthPublicKey:    pk,
+		ListenAddr:       listenAt,
+		OnSessionMessage: h.OnSessionMessage,
+		OnSessionStatus:  h.OnSessionStatus,
 	}
-	svr, err := server.NewTcpServer(listenAt, h)
+	svr, err := server.NewTcpServer(svropt)
 	if err != nil {
 		panic(err)
 	}
 
 	defer svr.Stop()
-	fmt.Println("server started,listening on: ", listenAt)
+	fmt.Println("server started,listening on ", listenAt)
 	go svr.Start()
 
-	signal.WaitShutdown()
+	WaitShutdown()
 }
 
 func main() {
@@ -86,7 +94,7 @@ func main() {
 }
 
 var (
-	Name       string = "battlefield"
+	Name       string = "route"
 	Version    string = "unknow"
 	GitCommit  string = "unknow"
 	BuildAt    string = "unknow"
@@ -118,7 +126,10 @@ func Run() error {
 }
 
 func RealMain(c *cli.Context) error {
-	StartServer(":14321")
-	signal.WaitShutdown()
+	listenAt := ":8080"
+	if c.Args().Len() == 2 {
+		listenAt = c.Args().Get(1)
+	}
+	StartServer(listenAt)
 	return nil
 }

@@ -3,7 +3,7 @@ package handle
 import (
 	"sync"
 
-	"github.com/ajenpan/surf/server"
+	"route/server"
 )
 
 // type SessionMap struct {
@@ -40,7 +40,7 @@ func (sm *SessionMap) Remove(sid string) bool {
 }
 
 func (sm *SessionMap) Store(s server.Session) bool {
-	sm.imp.Store(s.ID(), s)
+	sm.imp.Store(s.UserID(), s)
 	return true
 }
 

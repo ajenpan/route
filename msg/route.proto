@@ -4,6 +4,15 @@ package route;
 
 option go_package = "/msg";
 
+message MsgSubType {}
+
+message Head {
+  uint32 msgtype = 1;
+  string msgname = 2;
+  uint32 seqid = 3;
+  uint64 uid = 4;
+}
+
 message OSInfo {
   string name = 1;
   string version = 2;
@@ -186,8 +195,5 @@ message ListGroupSessionResponse {
   uint32 total = 2;
 }
 
-
 // events
-message EventSessionStatChange {
-  
-}
+message EventSessionStatChange {}

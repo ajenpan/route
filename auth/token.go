@@ -9,34 +9,49 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 )
 
-func VerifyToken(pk *rsa.PublicKey, tokenRaw string) (uint64, string, string, error) {
+func VerifyToken(pk *rsa.PublicKey, tokenRaw []byte) (*UserInfo, error) {
 	claims := make(jwt.MapClaims)
-	token, err := jwt.ParseWithClaims(tokenRaw, claims, func(t *jwt.Token) (interface{}, error) {
+	token, err := jwt.ParseWithClaims(string(tokenRaw), claims, func(t *jwt.Token) (interface{}, error) {
 		return pk, nil
 	})
 	if err != nil {
-		return 0, "", "", err
+		return nil, err
 	}
 	if !token.Valid {
-		return 0, "", "", fmt.Errorf("invalid token")
+		return nil, fmt.Errorf("invalid token")
 	}
-	uidstr := claims["uid"]
-	uname := claims["aud"]
-	role := claims["rid"]
-	uid, _ := strconv.ParseUint(uidstr.(string), 10, 64)
-
-	return uid, uname.(string), role.(string), err
+	ret := &UserInfo{}
+	if uname, has := claims["aud"]; has {
+		ret.UName = uname.(string)
+	}
+	if uidstr, has := claims["uid"]; has {
+		uid, _ := strconv.ParseUint(uidstr.(string), 10, 64)
+		ret.UId = uid
+	}
+	if role, has := claims["rid"]; has {
+		ret.URole = role.(string)
+	}
+	return ret, nil
 }
 
-func GenerateToken(pk *rsa.PrivateKey, uid uint64, uname, role string) (string, error) {
+func GenerateToken(pk *rsa.PrivateKey, uinfo *UserInfo, validity time.Duration) (string, error) {
+	if validity == 0 {
+		validity = 24 * time.Hour
+	}
 	claims := make(jwt.MapClaims)
 	claims["exp"] = time.Now().Add(24 * time.Hour).Unix()
 	claims["iat"] = time.Now().Unix()
-	claims["uid"] = strconv.FormatUint(uint64(uid), 10)
-	claims["aud"] = uname
-	claims["rid"] = role
+	claims["uid"] = strconv.FormatUint(uinfo.UId, 10)
+	claims["aud"] = uinfo.UName
+	claims["rid"] = uinfo.URole
 	claims["iss"] = "hotwave"
 	claims["sub"] = "auth"
 	token := jwt.NewWithClaims(jwt.SigningMethodRS256, claims)
 	return token.SignedString(pk)
+}
+
+func RsaTokenAuth(pk *rsa.PublicKey) func(data []byte) (*UserInfo, error) {
+	return func(data []byte) (*UserInfo, error) {
+		return VerifyToken(pk, data)
+	}
 }
