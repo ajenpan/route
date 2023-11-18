@@ -98,6 +98,7 @@ func (hr THVPacketMeta) GetBodyLen() uint32 {
 func (hr THVPacketMeta) SetBodyLen(l uint32) {
 	PutUint24(hr[3:6], l)
 }
+
 func (hr THVPacketMeta) Reset() {
 	for i := 0; i < len(hr); i++ {
 		hr[i] = 0

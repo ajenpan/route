@@ -1,4 +1,4 @@
-package tcp
+package tcpv2
 
 import (
 	"errors"
@@ -42,22 +42,26 @@ func NewSocket(conn net.Conn, opts SocketOptions) *Socket {
 		id:       opts.ID,
 		conn:     conn,
 		timeOut:  opts.Timeout,
-		chWrite:  make(chan []byte, 100),
-		chClosed: make(chan bool),
+		chWrite:  make(chan *Packet, 100),
+		chClosed: make(chan struct{}),
+		readcache: &Packet{
+			head: newHead(),
+			body: make([]byte, MaxPacketBodySize),
+		},
+		status: Handshake,
 	}
 	return ret
 }
 
 type Socket struct {
 	auth.UserInfo
-
 	Meta sync.Map
 
 	conn net.Conn
 	id   string
 
-	chWrite  chan []byte
-	chClosed chan bool
+	chWrite  chan *Packet
+	chClosed chan struct{}
 
 	timeOut time.Duration
 
@@ -65,17 +69,34 @@ type Socket struct {
 	lastRecvAt int64
 
 	status SocketStatus
+
+	readcache *Packet
 }
 
 func (s *Socket) SessionID() string {
 	return s.id
 }
 
-func (s *Socket) Send(p []byte) error {
+func (s *Socket) Send(raw []byte) error {
 	if !s.Valid() {
 		return ErrDisconn
 	}
-	s.chWrite <- p
+	if len(raw) == 0 {
+		return nil
+	}
+
+	for len(raw) > 0 {
+		p := &Packet{head: newHead()}
+		if len(raw) > MaxPacketBodySize {
+			p.SetBody(raw[:MaxPacketBodySize])
+			raw = raw[MaxPacketBodySize:]
+		} else {
+			p.SetBody(raw)
+			raw = nil
+		}
+		p.head.SetType(PacketTypeMessage)
+		s.chWrite <- p
+	}
 	return nil
 }
 
@@ -131,16 +152,12 @@ func (s *Socket) writeWork() error {
 	defer func() {
 		close(s.chClosed)
 	}()
-	var err error
 	for {
 		select {
 		case <-s.chClosed:
-			return err
+			return nil
 		case p := <-s.chWrite:
-			if s.timeOut > 0 {
-				s.conn.SetWriteDeadline(time.Now().Add(s.timeOut))
-			}
-			if _, err = s.conn.Write(p); err != nil {
+			if err := writePacket(s.conn, p, s.timeOut); err != nil {
 				return err
 			}
 			s.lastSendAt = time.Now().Unix()
@@ -148,22 +165,61 @@ func (s *Socket) writeWork() error {
 	}
 }
 
-func (s *Socket) readWork(p []byte) ([]byte, error) {
-	if !s.Valid() {
-		return p, ErrDisconn
+func (s *Socket) readWork(recv chan<- *Packet) error {
+	defer func() {
+		close(s.chClosed)
+	}()
+	for {
+		select {
+		case <-s.chClosed:
+			return nil
+		default:
+			// TODO: with pool
+			p := NewPacket()
+			err := readPacket(s.conn, p, s.timeOut)
+			if err != nil {
+				return err
+			}
+			s.lastRecvAt = time.Now().Unix()
+			recv <- p
+		}
+	}
+}
+
+func readPacket(conn net.Conn, p *Packet, timeout time.Duration) error {
+	if timeout > 0 {
+		conn.SetReadDeadline(time.Now().Add(timeout))
+	}
+	if _, err := io.ReadFull(conn, p.head); err != nil {
+		return err
+	}
+	if !p.head.Valid() {
+		return ErrInvalidPacket
+	}
+	bodylen := p.head.GetBodyLen()
+	if bodylen > 0 {
+		if int(bodylen) > cap(p.body) {
+			p.body = make([]byte, bodylen)
+		} else {
+			p.body = p.body[:bodylen]
+		}
+		if _, err := io.ReadFull(conn, p.body); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func writePacket(conn net.Conn, p *Packet, timeout time.Duration) error {
+	if timeout > 0 {
+		conn.SetWriteDeadline(time.Now().Add(timeout))
 	}
 	var err error
-	select {
-	case <-s.chClosed:
-		break
-	default:
-		if s.timeOut > 0 {
-			s.conn.SetReadDeadline(time.Now().Add(s.timeOut))
-		}
-		if _, err = io.ReadFull(s.conn, p); err != nil {
-			break
-		}
-		s.lastRecvAt = time.Now().Unix()
+	if _, err = conn.Write(p.head); err != nil {
+		return err
 	}
-	return p, err
+	if _, err = conn.Write(p.body[:p.head.GetBodyLen()]); err != nil {
+		return err
+	}
+	return nil
 }

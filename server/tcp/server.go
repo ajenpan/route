@@ -77,12 +77,6 @@ func (s *Server) Stop() error {
 		close(s.die)
 	}
 	s.listener.Close()
-
-	// s.mu.RLock()
-	// defer s.mu.RUnlock()
-	// for _, s := range s.sockets {
-	// 	s.Close()
-	// }
 	s.wgConns.Wait()
 	return nil
 }

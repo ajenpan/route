@@ -1,4 +1,4 @@
-package tcp
+package tcpv2
 
 type PacketType = uint8
 
@@ -44,35 +44,35 @@ func PutUint16(b []uint8, v uint16) {
 
 const PackMetaLen = 4
 
-type Head []uint8
+type head []uint8
 
-func newHead() Head {
+func newHead() head {
 	return make([]uint8, PackMetaLen)
 }
 
-func (hr Head) GetType() uint8 {
+func (hr head) GetType() uint8 {
 	return hr[0]
 }
 
-func (hr Head) SetType(l uint8) {
+func (hr head) SetType(l uint8) {
 	hr[0] = l
 }
 
-func (h Head) GetBodyLen() uint16 {
+func (h head) GetBodyLen() uint16 {
 	return GetUint16(h[2:3])
 }
 
-func (hr Head) SetBodyLen(l uint16) {
+func (hr head) SetBodyLen(l uint16) {
 	PutUint16(hr[2:3], l)
 }
 
-func (hr Head) Reset() {
+func (hr head) Reset() {
 	for i := 0; i < len(hr); i++ {
 		hr[i] = 0
 	}
 }
 
-func (hr Head) Valid() bool {
+func (hr head) Valid() bool {
 	if hr.GetType() <= PacketTypeInnerStartAt_ || hr.GetType() >= PacketTypeInnerEndAt_ {
 		return false
 	}
@@ -80,4 +80,32 @@ func (hr Head) Valid() bool {
 		return false
 	}
 	return true
+}
+
+type Packet struct {
+	head head
+	body []uint8
+}
+
+func NewPacket() *Packet {
+	return &Packet{
+		head: newHead(),
+	}
+}
+
+func (p *Packet) SetType(h uint8) {
+	p.head.SetType(h)
+}
+
+func (p *Packet) SetBody(b []uint8) {
+	p.body = b
+	p.head.SetBodyLen(uint16(len(b)))
+}
+
+func (p *Packet) GetType() uint8 {
+	return p.head.GetType()
+}
+
+func (p *Packet) GetBody() []uint8 {
+	return p.body
 }

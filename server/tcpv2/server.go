@@ -1,7 +1,8 @@
-package tcp
+package tcpv2
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"net"
 	"sync"
@@ -22,14 +23,15 @@ func nextID() string {
 }
 
 type ServerOptions struct {
-	Address           string
-	HeatbeatInterval  time.Duration
-	OnSocketMessage   func(*Socket, []byte)
-	OnSocketConn      func(*Socket)
-	OnSocketDisconn   func(*Socket, error)
-	OnAccpectConnFunc func(net.Conn) bool
-	NewIDFunc         func() string
-	AuthFunc          func([]byte) (*auth.UserInfo, error)
+	Address          string
+	HeatbeatInterval time.Duration
+	NewIDFunc        func() string
+	AuthFunc         func([]byte) (*auth.UserInfo, error)
+
+	OnSocketMessage func(*Socket, []byte)
+	OnSocketConn    func(*Socket)
+	OnSocketDisconn func(*Socket, error)
+	OnAccpect       func(net.Conn) bool
 }
 
 type ServerOption func(*ServerOptions)
@@ -110,91 +112,120 @@ func (s *Server) Start() error {
 	return nil
 }
 
-func (s *Server) doHandShake(conn net.Conn) (*Socket, error) {
+func (s *Server) handshake(conn net.Conn) error {
+	p := NewPacket()
 
-	return nil, nil
+	rwtimeout := s.opts.HeatbeatInterval
+
+	if err := readPacket(conn, p, rwtimeout); err != nil {
+		return err
+	}
+
+	if p.GetType() != PacketTypeHandShake && len(p.GetBody()) != 0 {
+		return ErrInvalidPacket
+	}
+
+	var userinfo *auth.UserInfo
+	var err error
+
+	// auth token
+	if s.opts.AuthFunc != nil {
+		p.SetType(PacketTypeActionRequire)
+		p.SetBody([]byte("auth"))
+		if err = writePacket(conn, p, rwtimeout); err != nil {
+			return err
+		}
+
+		if err = readPacket(conn, p, rwtimeout); err != nil || p.GetType() != PacketTypeDoAction {
+			return err
+		}
+
+		if userinfo, err = s.opts.AuthFunc(p.GetBody()); err != nil {
+			p.SetType(PacketTypeAckResult)
+			p.SetBody([]byte("fail"))
+			writePacket(conn, p, rwtimeout)
+			return err
+		}
+	}
+
+	socketid := s.opts.NewIDFunc()
+	socket := NewSocket(conn, SocketOptions{
+		ID:      socketid,
+		Timeout: s.opts.HeatbeatInterval,
+	})
+
+	p.SetType(PacketTypeAckResult)
+	p.SetBody([]byte(socketid))
+
+	if err := writePacket(conn, p, rwtimeout); err != nil {
+		return err
+	}
+	socket.UserInfo = *userinfo
+	return nil
 }
 
 func (s *Server) onAccept(conn net.Conn) {
-	if s.opts.OnAccpectConnFunc != nil {
-		if !s.opts.OnAccpectConnFunc(conn) {
+	if s.opts.OnAccpect != nil {
+		if !s.opts.OnAccpect(conn) {
 			conn.Close()
 			return
 		}
 	}
-	socket, err := s.doHandShake(conn)
-	if err != nil {
+
+	if err := s.handshake(conn); err != nil {
 		conn.Close()
 		return
 	}
 
-	socket.status = Connected
+	socket := NewSocket(conn, SocketOptions{
+		ID:      s.opts.NewIDFunc(),
+		Timeout: s.opts.HeatbeatInterval / 2,
+	})
 	defer socket.Close()
 
+	socket.status = Connected
 	s.wgConns.Add(1)
 	defer s.wgConns.Done()
 
 	// the connection is established here
-	var socketErr error = nil
-
-	go func() {
-		err := socket.writeWork()
-		if err != nil {
-			fmt.Println(err)
-		}
-	}()
+	var writeErr error
+	var readErr error
 
 	s.storeSocket(socket)
 	defer s.removeSocket(socket)
 
-	head := newHead()
-	bodyhold := make([]byte, MaxPacketBodySize)
-
 	if s.opts.OnSocketConn != nil {
 		s.opts.OnSocketConn(socket)
 	}
-
 	if s.opts.OnSocketDisconn != nil {
 		defer func() {
-			s.opts.OnSocketDisconn(socket, socketErr)
+			s.opts.OnSocketDisconn(socket, errors.Join(writeErr, readErr))
 		}()
 	}
 
+	go func() {
+		writeErr = socket.writeWork()
+	}()
+	recvchan := make(chan *Packet, 100)
+	go func() {
+		readErr = socket.readWork(recvchan)
+	}()
+
 	for {
 		select {
+		case <-socket.chClosed:
+			return
 		case <-s.die:
 			return
-		default:
-			if _, socketErr := socket.readWork(head); socketErr != nil {
-				return
-			}
-			if !head.Valid() {
-				socketErr = ErrInvalidPacket
-				return
-			}
-			body := bodyhold[:head.GetBodyLen()]
-			if _, socketErr := socket.readWork(body); socketErr != nil {
-				return
-			}
-
-			//TODO:
-			// p := newEmptyTHVPacket()
-			// socketErr = socket.readPacket(p)
-			// if socketErr != nil {
-			// 	break
-			// }
-
-			typ := head.GetType()
-			if typ >= PacketTypeInnerStartAt_ && typ <= PacketTypeInnerEndAt_ {
-				switch typ {
-				case PacketTypeHeartbeat:
-					fallthrough
-				case PacketTypeEcho:
-					socket.Send(bytes.Clone(body))
-				}
-			} else {
+		case packet := <-recvchan:
+			switch packet.head.GetType() {
+			case PacketTypeHeartbeat:
+				fallthrough
+			case PacketTypeEcho:
+				socket.Send(bytes.Clone(packet.body))
+			case PacketTypeMessage:
 				if s.opts.OnSocketMessage != nil {
-					s.opts.OnSocketMessage(socket, body)
+					s.opts.OnSocketMessage(socket, packet.body)
 				}
 			}
 		}
