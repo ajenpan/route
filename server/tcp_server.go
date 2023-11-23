@@ -3,6 +3,7 @@ package server
 import (
 	"crypto/rsa"
 	"fmt"
+	"net"
 
 	"route/auth"
 	"route/msg"
@@ -31,6 +32,10 @@ func NewTcpServer(opts *TcpServerOptions) (*TcpServer, error) {
 		Address:   opts.ListenAddr,
 		OnMessage: ret.OnTcpMessage,
 		OnConn:    ret.OnTcpConn,
+		OnAccpectConn: func(conn net.Conn) bool {
+			fmt.Printf("OnAccpectConn remote:%s, local:%s\n", conn.RemoteAddr(), conn.LocalAddr())
+			return true
+		},
 		NewIDFunc: NewSessionID,
 	}
 
@@ -122,6 +127,8 @@ func (s *TcpServer) OnTcpMessage(socket *tcp.Socket, p *tcp.THVPacket) {
 }
 
 func (s *TcpServer) OnTcpConn(socket *tcp.Socket, valid bool) {
+	fmt.Printf("OnTcpConn remote:%s, local:%s, valid:%v\n", socket.RemoteAddr(), socket.LocalAddr(), valid)
+
 	var sess *TcpSession
 	if valid {
 		sess = &TcpSession{

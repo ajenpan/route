@@ -107,7 +107,7 @@ func (c *Client) doconnect() error {
 		var socketErr error = nil
 		for {
 			p := newEmptyTHVPacket()
-			if socketErr = c.Socket.readPacket(p); socketErr != nil {
+			if socketErr = c.Socket.read(p); socketErr != nil {
 				break
 			}
 			typ := p.GetType()

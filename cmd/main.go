@@ -7,7 +7,9 @@ import (
 	"os"
 	"runtime"
 	"syscall"
+	"time"
 
+	"route/auth"
 	"route/handle"
 	"route/server"
 
@@ -61,10 +63,18 @@ func WaitShutdown() os.Signal {
 
 func StartServer(listenAt string) {
 	var err error
-	_, pk, err := LoadAuthKey()
+	ppk, pk, err := LoadAuthKey()
 	if err != nil {
 		panic(err)
 	}
+	jwt, _ := auth.GenerateToken(ppk, &auth.UserInfo{
+		UId:   10001,
+		UName: "gdclient",
+		URole: "user",
+	}, 24*time.Hour)
+
+	fmt.Println(jwt)
+
 	h, err := handle.NewRouter()
 	if err != nil {
 		panic(err)

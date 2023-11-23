@@ -25,10 +25,10 @@ type ServerOptions struct {
 	HeatbeatInterval time.Duration
 	OnMessage        OnMessageFunc
 	OnConn           OnConnStatFunc
-	NewIDFunc        NewIDFunc
-	AuthFunc         func([]byte) (*auth.UserInfo, error)
+	OnAccpectConn    func(net.Conn) bool
 
-	BeforeAccpectConnFunc func(net.Conn) bool
+	NewIDFunc NewIDFunc
+	AuthFunc  func([]byte) (*auth.UserInfo, error)
 }
 
 type ServerOption func(*ServerOptions)
@@ -135,9 +135,14 @@ func (s *Server) doHandShake(conn net.Conn) (*Socket, error) {
 			return nil, err
 		}
 		ack.Reset()
-		if err := readPacket(conn, ack, rwtimeout); err != nil || ack.GetType() != PacketTypeDoAction {
+		if err := readPacket(conn, ack, rwtimeout); err != nil {
 			return nil, err
 		}
+
+		if ack.GetType() != PacketTypeDoAction {
+			return nil, fmt.Errorf("invalid auth packet")
+		}
+
 		var err error
 		if userinfo, err = s.opts.AuthFunc(ack.GetBody()); err != nil {
 			ack.SetType(PacketTypeAckResult)
@@ -166,8 +171,8 @@ func (s *Server) doHandShake(conn net.Conn) (*Socket, error) {
 }
 
 func (s *Server) onAccept(conn net.Conn) {
-	if s.opts.BeforeAccpectConnFunc != nil {
-		if !s.opts.BeforeAccpectConnFunc(conn) {
+	if s.opts.OnAccpectConn != nil {
+		if !s.opts.OnAccpectConn(conn) {
 			conn.Close()
 			return
 		}
@@ -178,6 +183,9 @@ func (s *Server) onAccept(conn net.Conn) {
 		conn.Close()
 		return
 	}
+	s.storeSocket(socket)
+	defer s.removeSocket(socket)
+
 	defer socket.Close()
 
 	s.wgConns.Add(1)
@@ -185,9 +193,6 @@ func (s *Server) onAccept(conn net.Conn) {
 
 	// the connection is established
 	go socket.writeWork()
-
-	s.storeSocket(socket)
-	defer s.removeSocket(socket)
 
 	if s.opts.OnConn != nil {
 		s.opts.OnConn(socket, true)
@@ -201,11 +206,10 @@ func (s *Server) onAccept(conn net.Conn) {
 		case <-s.die:
 			return
 		default:
-			//TODO:
 			p := newEmptyTHVPacket()
-			socketErr = socket.readPacket(p)
+			socketErr = socket.read(p)
 			if socketErr != nil {
-				break
+				return
 			}
 
 			typ := p.GetType()
@@ -222,7 +226,6 @@ func (s *Server) onAccept(conn net.Conn) {
 				}
 			}
 		}
-
 	}
 }
 
@@ -246,14 +249,14 @@ func (s *Server) SocketCount() int {
 	return len(s.sockets)
 }
 
-func (s *Server) storeSocket(conn *Socket) {
+func (s *Server) storeSocket(socket *Socket) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	s.sockets[conn.SessionID()] = conn
+	s.sockets[socket.SessionID()] = socket
 }
 
-func (s *Server) removeSocket(conn *Socket) {
+func (s *Server) removeSocket(socket *Socket) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	delete(s.sockets, conn.SessionID())
+	delete(s.sockets, socket.SessionID())
 }

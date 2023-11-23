@@ -1,6 +1,7 @@
 package handle
 
 import (
+	"fmt"
 	"log"
 	"sync"
 
@@ -35,6 +36,8 @@ var tcpSocketKey = tcpSocketKeyT{}
 var tcpPacketKey = tcpPacketKeyT{}
 
 func (r *Router) OnSessionStatus(s server.Session, enable bool) {
+	fmt.Printf("OnSessionStatus: %v %v, %v \n", s.RemoteAddr(), s.UserName(), enable)
+
 	currSession := r.GetUserSession(s.UserID())
 	if enable {
 		if currSession != nil {

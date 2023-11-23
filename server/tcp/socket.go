@@ -126,11 +126,11 @@ func (s *Socket) Status() SocketStat {
 
 func (s *Socket) writeWork() {
 	for p := range s.chSend {
-		s.writePacket(p)
+		s.write(p)
 	}
 }
 
-func (s *Socket) readPacket(p Packet) error {
+func (s *Socket) read(p Packet) error {
 	if s.Status() == Disconnected {
 		return ErrDisconn
 	}
@@ -139,7 +139,7 @@ func (s *Socket) readPacket(p Packet) error {
 	return err
 }
 
-func (s *Socket) writePacket(p Packet) error {
+func (s *Socket) write(p Packet) error {
 	if s.Status() == Disconnected {
 		return ErrDisconn
 	}

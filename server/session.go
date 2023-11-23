@@ -2,6 +2,7 @@ package server
 
 import (
 	"fmt"
+	"net"
 	"sync/atomic"
 	"time"
 )
@@ -25,6 +26,8 @@ type Session interface {
 	Valid() bool
 	Close() error
 	Send(msg *Message) error
+
+	RemoteAddr() net.Addr
 }
 
 type FuncOnSessionMessage func(Session, *Message)
