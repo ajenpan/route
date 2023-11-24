@@ -10,6 +10,7 @@ const (
 )
 
 type Head = msg.Head
+type Error = msg.Error
 
 type Message struct {
 	ContentType ContentType

@@ -183,35 +183,45 @@ func (s *Server) onAccept(conn net.Conn) {
 		conn.Close()
 		return
 	}
-	s.storeSocket(socket)
-	defer s.removeSocket(socket)
 
 	defer socket.Close()
 
+	// the connection is established
+
+	var writeErr error
+	var readErr error
+
+	s.storeSocket(socket)
+	defer s.removeSocket(socket)
+
 	s.wgConns.Add(1)
 	defer s.wgConns.Done()
-
-	// the connection is established
-	go socket.writeWork()
 
 	if s.opts.OnConn != nil {
 		s.opts.OnConn(socket, true)
 		defer s.opts.OnConn(socket, false)
 	}
 
-	var socketErr error = nil
+	go func() {
+		writeErr = socket.writeWork()
+		fmt.Println("writeErr:", writeErr)
+	}()
+	recvchan := make(chan *THVPacket, 100)
+	go func() {
+		readErr = socket.readWork(recvchan)
+		fmt.Println("readErr:", readErr)
+	}()
 
 	for {
 		select {
+		case <-socket.chClosed:
+			return
 		case <-s.die:
 			return
-		default:
-			p := newEmptyTHVPacket()
-			socketErr = socket.read(p)
-			if socketErr != nil {
+		case p, ok := <-recvchan:
+			if !ok {
 				return
 			}
-
 			typ := p.GetType()
 			if typ >= PacketTypeInnerStartAt_ && typ <= PacketTypeInnerEndAt_ {
 				switch typ {

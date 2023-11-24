@@ -12,8 +12,8 @@ type ClientOption func(*ClientOptions)
 
 type ClientOptions struct {
 	RemoteAddress        string
-	OnMessage            OnMessageFunc
-	OnConnStat           OnConnStatFunc
+	OnMessage            func(*Client, *THVPacket)
+	OnConnStat           func(*Client, bool)
 	Token                string
 	Timeout              time.Duration
 	ReconnectDelaySecond int32
@@ -64,13 +64,31 @@ func (c *Client) doconnect() error {
 	}
 	c.Socket = socket
 
-	go socket.writeWork()
-
 	go func() {
+
+		tk := time.NewTicker(c.Opt.Timeout / 3)
+		defer tk.Stop()
+		heartbeatPakcet := newEmptyTHVPacket()
+		heartbeatPakcet.SetType(PacketTypeHeartbeat)
+		checkPos := int64(c.Opt.Timeout.Seconds() / 2)
+
+		var writeErr error
+		var readErr error
+
+		go func() {
+			writeErr = socket.writeWork()
+			fmt.Println("writeErr:", writeErr)
+		}()
+		recvchan := make(chan *THVPacket, 100)
+		go func() {
+			readErr = socket.readWork(recvchan)
+			fmt.Println("readErr:", readErr)
+		}()
+
 		defer func() {
 			c.Socket.Close()
 			if c.Opt.OnConnStat != nil {
-				c.Opt.OnConnStat(c.Socket, false)
+				c.Opt.OnConnStat(c, false)
 			}
 			if c.Opt.ReconnectDelaySecond > 0 {
 				c.reconnect()
@@ -78,46 +96,45 @@ func (c *Client) doconnect() error {
 		}()
 
 		if c.Opt.OnConnStat != nil {
-			c.Opt.OnConnStat(c.Socket, true)
+			c.Opt.OnConnStat(c, true)
 		}
 
-		go func() {
-			tk := time.NewTicker(c.Opt.Timeout / 3)
-			defer tk.Stop()
-
-			heartbeatPakcet := newEmptyTHVPacket()
-			heartbeatPakcet.SetType(PacketTypeHeartbeat)
-
-			checkPos := int64(c.Opt.Timeout.Seconds() / 2)
-
-			for {
-				select {
-				case <-tk.C:
-					nowUnix := time.Now().Unix()
-					lastSendAt := atomic.LoadInt64(&c.Socket.lastSendAt)
-					if nowUnix-lastSendAt >= checkPos {
-						c.Socket.chSend <- heartbeatPakcet
-					}
-				case <-c.Socket.chClosed:
+		for {
+			select {
+			case <-socket.chClosed:
+				return
+			case t, ok := <-tk.C:
+				if !ok {
 					return
 				}
-			}
-		}()
+				nowUnix := t.Unix()
+				lastSendAt := atomic.LoadInt64(&socket.lastSendAt)
+				if nowUnix-lastSendAt >= checkPos {
+					socket.chSend <- heartbeatPakcet
+				}
+			case p, ok := <-recvchan:
+				if !ok {
+					return
+				}
+				typ := p.GetType()
 
-		var socketErr error = nil
-		for {
-			p := newEmptyTHVPacket()
-			if socketErr = c.Socket.read(p); socketErr != nil {
-				break
-			}
-			typ := p.GetType()
-			if typ > PacketTypeInnerEndAt_ {
-				if c.Opt.OnMessage != nil {
-					c.Opt.OnMessage(c.Socket, p)
+				if typ >= PacketTypeInnerStartAt_ && typ <= PacketTypeInnerEndAt_ {
+					switch typ {
+					case PacketTypeHeartbeat:
+						fallthrough
+					case PacketTypeEcho:
+					default:
+						//DO NOTHING
+					}
+
+				} else {
+					if c.Opt.OnMessage != nil {
+						c.Opt.OnMessage(c, p)
+					}
 				}
 			}
 		}
-		fmt.Println("socket read error: ", socketErr)
+
 	}()
 	return nil
 }
@@ -204,10 +221,4 @@ func (c *Client) Connect() error {
 		c.reconnect()
 	}
 	return err
-}
-
-func (c *Client) Close() {
-	if c.Socket != nil {
-		c.Socket.Close()
-	}
 }

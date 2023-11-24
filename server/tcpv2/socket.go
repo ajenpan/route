@@ -44,10 +44,7 @@ func NewSocket(conn net.Conn, opts SocketOptions) *Socket {
 		timeOut:  opts.Timeout,
 		chWrite:  make(chan *Packet, 100),
 		chClosed: make(chan struct{}),
-		readcache: &Packet{
-			head: newHead(),
-			body: make([]byte, MaxPacketBodySize),
-		},
+
 		status: Handshake,
 	}
 	return ret
@@ -69,8 +66,6 @@ type Socket struct {
 	lastRecvAt int64
 
 	status SocketStatus
-
-	readcache *Packet
 }
 
 func (s *Socket) SessionID() string {
@@ -101,9 +96,6 @@ func (s *Socket) Send(raw []byte) error {
 }
 
 func (s *Socket) Close() error {
-	if s == nil {
-		return nil
-	}
 	stat := atomic.SwapInt32((*int32)(&s.status), int32(Disconnected))
 	if stat == int32(Disconnected) {
 		return nil
@@ -150,13 +142,16 @@ func (s *Socket) Status() SocketStatus {
 
 func (s *Socket) writeWork() error {
 	defer func() {
-		close(s.chClosed)
+		s.Close()
 	}()
 	for {
 		select {
 		case <-s.chClosed:
 			return nil
-		case p := <-s.chWrite:
+		case p, ok := <-s.chWrite:
+			if !ok {
+				return nil
+			}
 			if err := writePacket(s.conn, p, s.timeOut); err != nil {
 				return err
 			}
@@ -167,7 +162,7 @@ func (s *Socket) writeWork() error {
 
 func (s *Socket) readWork(recv chan<- *Packet) error {
 	defer func() {
-		close(s.chClosed)
+		s.Close()
 	}()
 	for {
 		select {

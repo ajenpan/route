@@ -61,7 +61,7 @@ func (r *Router) OnSessionMessage(s server.Session, m *server.Message) {
 	var err error
 
 	head := m.Head
-	if head.Uid == 0 || head.Uid == r.Selfinfo.UserID() {
+	if head.Uid == 0 {
 		//call my self
 		r.OnCall(s, m)
 		return
@@ -79,7 +79,7 @@ func (r *Router) OnSessionMessage(s server.Session, m *server.Message) {
 	}
 
 	head.Uid = s.UserID()
-	err = s.Send(m)
+	err = targetSess.Send(m)
 	if err != nil {
 		log.Println(err)
 	}

@@ -40,7 +40,7 @@ func NewSocket(conn net.Conn, opts SocketOptions) *Socket {
 		conn:     conn,
 		timeOut:  opts.Timeout,
 		chSend:   make(chan Packet, 100),
-		chClosed: make(chan bool),
+		chClosed: make(chan struct{}),
 		state:    Connected,
 	}
 	return ret
@@ -48,20 +48,19 @@ func NewSocket(conn net.Conn, opts SocketOptions) *Socket {
 
 type Socket struct {
 	auth.UserInfo
-
 	Meta sync.Map
 
-	conn  net.Conn
-	state SocketStat
-	id    string
+	conn net.Conn
+	id   string
 
 	chSend   chan Packet // push message queue
-	chClosed chan bool
+	chClosed chan struct{}
 
 	timeOut time.Duration
 
 	lastSendAt int64
 	lastRecvAt int64
+	state      SocketStat
 }
 
 func (s *Socket) SessionID() string {
@@ -77,20 +76,22 @@ func (s *Socket) SendPacket(p Packet) error {
 }
 
 func (s *Socket) Close() error {
-	if s == nil {
-		return nil
-	}
 	stat := atomic.SwapInt32((*int32)(&s.state), int32(Disconnected))
 	if stat == int32(Disconnected) {
 		return nil
 	}
 
+	select {
+	case <-s.chClosed:
+		return nil
+	default:
+		close(s.chClosed)
+	}
 	if s.conn != nil {
 		s.conn.Close()
 		s.conn = nil
 	}
 	close(s.chSend)
-	close(s.chClosed)
 	return nil
 }
 
@@ -124,28 +125,56 @@ func (s *Socket) Status() SocketStat {
 	return SocketStat(atomic.LoadInt32((*int32)(&s.state)))
 }
 
-func (s *Socket) writeWork() {
-	for p := range s.chSend {
-		s.write(p)
+// func (s *Socket) read(p Packet) error {
+// 	if s.Status() == Disconnected {
+// 		return ErrDisconn
+// 	}
+// 	err := readPacket(s.conn, p, s.timeOut)
+// 	s.lastRecvAt = time.Now().Unix()
+// 	return err
+// }
+
+func (s *Socket) writeWork() error {
+	defer func() {
+		s.Close()
+	}()
+
+	for {
+		select {
+		case <-s.chClosed:
+			return nil
+		case p, ok := <-s.chSend:
+			if !ok {
+				return nil
+			}
+			if err := writePacket(s.conn, p, s.timeOut); err != nil {
+				return err
+			}
+			s.lastSendAt = time.Now().Unix()
+		}
 	}
 }
 
-func (s *Socket) read(p Packet) error {
-	if s.Status() == Disconnected {
-		return ErrDisconn
-	}
-	err := readPacket(s.conn, p, s.timeOut)
-	s.lastRecvAt = time.Now().Unix()
-	return err
-}
+func (s *Socket) readWork(recv chan<- *THVPacket) error {
+	defer func() {
+		s.Close()
+	}()
 
-func (s *Socket) write(p Packet) error {
-	if s.Status() == Disconnected {
-		return ErrDisconn
+	for {
+		select {
+		case <-s.chClosed:
+			return nil
+		default:
+			// TODO: with pool
+			p := newEmptyTHVPacket()
+			err := readPacket(s.conn, p, s.timeOut)
+			if err != nil {
+				return err
+			}
+			s.lastRecvAt = time.Now().Unix()
+			recv <- p
+		}
 	}
-	err := writePacket(s.conn, p, s.timeOut)
-	s.lastSendAt = time.Now().Unix()
-	return err
 }
 
 func readPacket(conn net.Conn, p Packet, timeout time.Duration) error {

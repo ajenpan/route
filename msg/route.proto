@@ -6,11 +6,17 @@ option go_package = "/msg";
 
 message MsgSubType {}
 
+message Error {
+  int32 code = 1;
+  string errmsg = 2;
+}
+
 message Head {
   uint32 msgtype = 1;
   string msgname = 2;
   uint32 seqid = 3;
   uint64 uid = 4;
+  Error err = 5;
 }
 
 message OSInfo {

@@ -17,7 +17,7 @@ const (
 	PacketTypeInnerEndAt_ PacketType = PacketTypeInnerStartAt_ + iota
 )
 
-var MaxPacketBodySize = 8096
+var MaxPacketBodySize = 0xFFFF
 
 func GetUint24(b []uint8) uint32 {
 	_ = b[2] // bounds check hint to compiler; see golang.org/issue/14808

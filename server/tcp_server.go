@@ -10,6 +10,8 @@ import (
 	"route/server/tcp"
 
 	"route/server/marshal"
+
+	"google.golang.org/protobuf/proto"
 )
 
 type TcpServerOptions struct {
@@ -59,8 +61,7 @@ type TcpServer struct {
 }
 
 type TcpSession struct {
-	*tcp.Socket
-	marshaler marshal.Marshaler
+	imp *tcp.Socket
 }
 
 var tcpSessionKey = &struct{}{}
@@ -69,25 +70,47 @@ func (s *TcpSession) Send(msg *Message) error {
 	if msg == nil {
 		return fmt.Errorf("message is nil")
 	}
-	p := s.msg2pkg(msg)
+	p := msg2pkg(msg)
 	if p == nil {
 		return fmt.Errorf("message is nil")
 	}
-	return s.Socket.SendPacket(p)
+	return s.imp.SendPacket(p)
 }
 
+func (s *TcpSession) UserID() uint64 {
+	return s.imp.UId
+}
+func (s *TcpSession) UserRole() string {
+	return s.imp.URole
+}
+func (s *TcpSession) UserName() string {
+	return s.imp.UName
+}
 func (s *TcpSession) SessionType() string {
 	return "tcp-session"
 }
+func (s *TcpSession) Close() error {
+	return s.imp.Close()
+}
+func (s *TcpSession) Valid() bool {
+	return s.imp.Valid()
+}
+func (s *TcpSession) RemoteAddr() net.Addr {
+	return s.imp.RemoteAddr()
+}
+func (s *TcpSession) SessionID() string {
+	return s.imp.SessionID()
+}
 
-func (s *TcpSession) msg2pkg(p *Message) *tcp.THVPacket {
-	headraw, _ := s.marshaler.Marshal(p.Head)
+func msg2pkg(p *Message) *tcp.THVPacket {
+	headraw, _ := proto.Marshal(p.Head)
+
 	return tcp.NewTHVPacket(uint8(p.ContentType), headraw, p.Body)
 }
 
-func (s *TcpSession) pkg2msg(p *tcp.THVPacket) *Message {
+func pkg2msg(p *tcp.THVPacket) *Message {
 	head := &msg.Head{}
-	s.marshaler.Unmarshal(p.GetHead(), head)
+	proto.Unmarshal(p.GetHead(), head)
 	ret := &Message{
 		ContentType: ContentType(p.GetType()),
 		Head:        head,
@@ -118,7 +141,7 @@ func (s *TcpServer) OnTcpMessage(socket *tcp.Socket, p *tcp.THVPacket) {
 		return
 	}
 	if s.opts.OnSessionMessage != nil {
-		msg := sess.pkg2msg(p)
+		msg := pkg2msg(p)
 		if msg == nil {
 			return
 		}
@@ -127,13 +150,12 @@ func (s *TcpServer) OnTcpMessage(socket *tcp.Socket, p *tcp.THVPacket) {
 }
 
 func (s *TcpServer) OnTcpConn(socket *tcp.Socket, valid bool) {
-	fmt.Printf("OnTcpConn remote:%s, local:%s, valid:%v\n", socket.RemoteAddr(), socket.LocalAddr(), valid)
+	//fmt.Printf("OnTcpConn remote:%s, local:%s, valid:%v\n", socket.RemoteAddr(), socket.LocalAddr(), valid)
 
 	var sess *TcpSession
 	if valid {
 		sess = &TcpSession{
-			Socket:    socket,
-			marshaler: s.opts.Marshal,
+			imp: socket,
 		}
 		socket.Meta.Store(tcpSessionKey, sess)
 	} else {

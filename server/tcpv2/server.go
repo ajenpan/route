@@ -217,7 +217,10 @@ func (s *Server) onAccept(conn net.Conn) {
 			return
 		case <-s.die:
 			return
-		case packet := <-recvchan:
+		case packet, ok := <-recvchan:
+			if !ok {
+				return
+			}
 			switch packet.head.GetType() {
 			case PacketTypeHeartbeat:
 				fallthrough
