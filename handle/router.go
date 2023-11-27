@@ -13,7 +13,7 @@ import (
 
 func NewRouter() (*Router, error) {
 	ret := &Router{
-		userSession: make(map[uint64]server.Session),
+		userSession: make(map[uint32]server.Session),
 		// UserSessions :
 	}
 
@@ -21,7 +21,7 @@ func NewRouter() (*Router, error) {
 }
 
 type Router struct {
-	userSession     map[uint64]server.Session
+	userSession     map[uint32]server.Session
 	userSessionLock sync.RWMutex
 
 	// UserSessions *UserSessions
@@ -36,7 +36,7 @@ var tcpSocketKey = tcpSocketKeyT{}
 var tcpPacketKey = tcpPacketKeyT{}
 
 func (r *Router) OnSessionStatus(s server.Session, enable bool) {
-	fmt.Printf("OnSessionStatus: %v %v, %v \n", s.RemoteAddr(), s.UserName(), enable)
+	fmt.Printf("OnSessionStatus: %v %v %v, %v \n", s.SessionID(), s.RemoteAddr(), s.UserName(), enable)
 
 	currSession := r.GetUserSession(s.UserID())
 	if enable {
@@ -55,19 +55,17 @@ func (r *Router) OnSessionStatus(s server.Session, enable bool) {
 }
 
 func (r *Router) OnSessionMessage(s server.Session, m *server.Message) {
-	if m.ContentType != server.ProtoBinaryRoute {
-		return
-	}
-	var err error
 
-	head := m.Head
-	if head.Uid == 0 {
+	var err error
+	targetuid := m.GetUid()
+
+	if targetuid == 0 {
 		//call my self
 		r.OnCall(s, m)
 		return
 	}
 
-	targetSess := r.GetUserSession(head.Uid)
+	targetSess := r.GetUserSession(targetuid)
 	if targetSess == nil {
 		//TODO: send err to source
 		log.Println("session not found")
@@ -78,26 +76,26 @@ func (r *Router) OnSessionMessage(s server.Session, m *server.Message) {
 		return
 	}
 
-	head.Uid = s.UserID()
+	m.SetUid(s.UserID())
 	err = targetSess.Send(m)
 	if err != nil {
 		log.Println(err)
 	}
 }
 
-func (r *Router) GetUserSession(uid uint64) server.Session {
+func (r *Router) GetUserSession(uid uint32) server.Session {
 	r.userSessionLock.RLock()
 	defer r.userSessionLock.RUnlock()
 	return r.userSession[uid]
 }
 
-func (r *Router) StoreUserSession(uid uint64, s server.Session) {
+func (r *Router) StoreUserSession(uid uint32, s server.Session) {
 	r.userSessionLock.Lock()
 	defer r.userSessionLock.Unlock()
 	r.userSession[uid] = s
 }
 
-func (r *Router) RemoveUserSession(uid uint64) {
+func (r *Router) RemoveUserSession(uid uint32) {
 	r.userSessionLock.Lock()
 	defer r.userSessionLock.Unlock()
 	delete(r.userSession, uid)
@@ -133,28 +131,8 @@ func (r *Router) PublishEvent(event proto.Message) {
 	log.Printf("[Mock PublishEvent] name:%v, msg:%v\n", string(proto.MessageName(event).Name()), event)
 }
 
-func (r *Router) SendMessage(s server.Session, askid uint32, msgtyp server.ContentType, m proto.Message) error {
-	// raw, err := proto.Marshal(m)
-	// if err != nil {
-	// 	return fmt.Errorf("marshal failed:%v", err)
-	// }
-
-	// msgid := calltable.GetMessageMsgID(m)
-	// if msgid == 0 {
-	// 	return fmt.Errorf("not found msgid:%v", msgid)
-	// }
-
-	// return s.SendPacket(tcp.NewPackFrame(PacketTypRoute, nil, raw))
-	return nil
-}
-
 func (r *Router) OnCall(s server.Session, msg *server.Message) {
 	// var err error
-
-	switch msg.Head.Msgname {
-	case "":
-
-	}
 
 	// msgid := int(head.GetMsgID())
 

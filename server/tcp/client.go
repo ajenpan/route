@@ -1,6 +1,7 @@
 package tcp
 
 import (
+	"errors"
 	"fmt"
 	"net"
 	"sync"
@@ -12,11 +13,13 @@ type ClientOption func(*ClientOptions)
 
 type ClientOptions struct {
 	RemoteAddress        string
-	OnMessage            func(*Client, *THVPacket)
-	OnConnStat           func(*Client, bool)
 	Token                string
 	Timeout              time.Duration
 	ReconnectDelaySecond int32
+
+	OnSocketMessage func(*Client, Packet)
+	OnSocketConn    func(*Client)
+	OnSocketDisconn func(*Client, error)
 }
 
 func NewClient(opts *ClientOptions) *Client {
@@ -37,19 +40,18 @@ type Client struct {
 	mutex sync.Mutex
 }
 
-func doAckAction(c net.Conn, name string, body []byte, timeout time.Duration) error {
-	p := newEmptyTHVPacket()
+func doAckAction(c net.Conn, body []byte, timeout time.Duration) error {
+	p := newHVPacket()
 	p.SetType(PacketTypeDoAction)
-	p.SetHead([]byte(name))
 	p.SetBody(body)
-	return writePacket(c, p, timeout)
+	return writePacket(c, timeout, p)
 }
 
 func (c *Client) doconnect() error {
 	c.mutex.Lock()
 	defer c.mutex.Unlock()
 
-	if c.Socket != nil && c.Socket.Valid() {
+	if c.Socket != nil && c.Socket.IsValid() {
 		c.Socket.Close()
 	}
 
@@ -65,10 +67,9 @@ func (c *Client) doconnect() error {
 	c.Socket = socket
 
 	go func() {
-
 		tk := time.NewTicker(c.Opt.Timeout / 3)
 		defer tk.Stop()
-		heartbeatPakcet := newEmptyTHVPacket()
+		heartbeatPakcet := newHVPacket()
 		heartbeatPakcet.SetType(PacketTypeHeartbeat)
 		checkPos := int64(c.Opt.Timeout.Seconds() / 2)
 
@@ -77,64 +78,52 @@ func (c *Client) doconnect() error {
 
 		go func() {
 			writeErr = socket.writeWork()
-			fmt.Println("writeErr:", writeErr)
 		}()
-		recvchan := make(chan *THVPacket, 100)
+		recvchan := make(chan Packet, 100)
 		go func() {
 			readErr = socket.readWork(recvchan)
-			fmt.Println("readErr:", readErr)
 		}()
 
 		defer func() {
 			c.Socket.Close()
-			if c.Opt.OnConnStat != nil {
-				c.Opt.OnConnStat(c, false)
+			if c.Opt.OnSocketDisconn != nil {
+				c.Opt.OnSocketDisconn(c, errors.Join(writeErr, readErr))
 			}
 			if c.Opt.ReconnectDelaySecond > 0 {
 				c.reconnect()
 			}
 		}()
 
-		if c.Opt.OnConnStat != nil {
-			c.Opt.OnConnStat(c, true)
+		if c.Opt.OnSocketConn != nil {
+			c.Opt.OnSocketConn(c)
 		}
 
 		for {
 			select {
 			case <-socket.chClosed:
 				return
-			case t, ok := <-tk.C:
+			case now, ok := <-tk.C:
 				if !ok {
 					return
 				}
-				nowUnix := t.Unix()
+				nowUnix := now.Unix()
 				lastSendAt := atomic.LoadInt64(&socket.lastSendAt)
 				if nowUnix-lastSendAt >= checkPos {
-					socket.chSend <- heartbeatPakcet
+					socket.chWrite <- heartbeatPakcet
 				}
 			case p, ok := <-recvchan:
 				if !ok {
 					return
 				}
-				typ := p.GetType()
-
-				if typ >= PacketTypeInnerStartAt_ && typ <= PacketTypeInnerEndAt_ {
-					switch typ {
-					case PacketTypeHeartbeat:
-						fallthrough
-					case PacketTypeEcho:
-					default:
-						//DO NOTHING
-					}
-
-				} else {
-					if c.Opt.OnMessage != nil {
-						c.Opt.OnMessage(c, p)
+				switch p.PacketType() {
+				case PacketTypeInnerStartAt_:
+				default:
+					if c.Opt.OnSocketMessage != nil {
+						c.Opt.OnSocketMessage(c, p)
 					}
 				}
 			}
 		}
-
 	}()
 	return nil
 }
@@ -142,7 +131,7 @@ func (c *Client) doconnect() error {
 func (c *Client) reconnect() {
 	time.AfterFunc(time.Duration(c.Opt.ReconnectDelaySecond)*time.Second, func() {
 		fmt.Println("start to reconnect")
-		if c.Valid() {
+		if c.IsValid() {
 			fmt.Println("already connected")
 			return
 		}
@@ -158,9 +147,9 @@ func (c *Client) reconnect() {
 func (c *Client) doHandShake(conn net.Conn) (*Socket, error) {
 	rwtimeout := c.Opt.Timeout
 
-	p := newEmptyTHVPacket()
+	p := newHVPacket()
 	p.SetType(PacketTypeHandShake)
-	if err := writePacket(conn, p, rwtimeout); err != nil {
+	if err := writePacket(conn, rwtimeout, p); err != nil {
 		return nil, err
 	}
 
@@ -172,33 +161,30 @@ func (c *Client) doHandShake(conn net.Conn) (*Socket, error) {
 
 	var err error
 	for {
-		p.Reset()
-		if err = readPacket(conn, p, rwtimeout); err != nil {
+		pp, err := readPacketT[*hvPacket](conn, rwtimeout)
+		if err != nil {
 			break
 		}
-		if p.GetType() == PacketTypeActionRequire {
-			name := string(p.GetHead())
+		if pp.GetType() == PacketTypeActionRequire {
+			name := string(pp.GetBody())
 			if data, has := actions[name]; !has {
 				err = fmt.Errorf("action %s not found", name)
 				break
 			} else {
-				if err = doAckAction(conn, name, data, rwtimeout); err != nil {
+				if err = doAckAction(conn, data, rwtimeout); err != nil {
 					break
 				}
 			}
-		} else if p.GetType() == PacketTypeAckResult {
-			head := string(p.GetHead())
-			body := string(p.GetBody())
-			if head != "ok" {
-				err = fmt.Errorf("ack result failed, head: %s, body: %s", head, body)
+		} else if pp.GetType() == PacketTypeAckResult {
+			body := string(pp.GetBody())
+			if len(body) == 0 {
+				err = fmt.Errorf("ack result failed")
 				break
 			}
-			if len(body) > 0 {
-				socketid = body
-			}
+			socketid = body
 			break
 		} else {
-			err = fmt.Errorf("invalid packet type: %d", p.GetType())
+			err = fmt.Errorf("invalid packet type: %d", pp.GetType())
 			break
 		}
 	}
@@ -221,4 +207,10 @@ func (c *Client) Connect() error {
 		c.reconnect()
 	}
 	return err
+}
+
+func (c *Client) Close() {
+	if c.Socket != nil {
+		c.Socket.Close()
+	}
 }

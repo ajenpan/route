@@ -1,12 +1,12 @@
 package auth
 
 type UserInfo struct {
-	UId   uint64
+	UId   uint32
 	UName string
 	URole string
 }
 
-func (u *UserInfo) UserID() uint64 {
+func (u *UserInfo) UserID() uint32 {
 	return u.UId
 }
 func (u *UserInfo) UserRole() string {

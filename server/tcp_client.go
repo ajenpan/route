@@ -3,7 +3,7 @@ package server
 import (
 	"context"
 	"errors"
-	"net"
+	"fmt"
 	"reflect"
 	"sync"
 	"sync/atomic"
@@ -22,18 +22,18 @@ type TcpClientOptions struct {
 }
 
 func NewTcpClient(opts *TcpClientOptions) *TcpClient {
-
 	ret := &TcpClient{
 		opts: opts,
 	}
 	imp := tcp.NewClient(&tcp.ClientOptions{
 		RemoteAddress:        opts.RemoteAddress,
 		Token:                opts.AuthToken,
-		OnMessage:            ret.OnTcpMessage,
-		OnConnStat:           ret.OnTcpConn,
+		OnSocketMessage:      ret.OnMessage,
+		OnSocketConn:         ret.OnConn,
+		OnSocketDisconn:      ret.OnDisconn,
 		ReconnectDelaySecond: opts.ReconnectDelaySecond,
 	})
-	ret.imp = imp
+	ret.Client = imp
 	return ret
 }
 
@@ -42,11 +42,18 @@ var ErrTimeout = errors.New("timeout")
 type FuncRespCallback = func(error, *TcpClient, *Message)
 
 type TcpClient struct {
-	*TcpSession
-	imp    *tcp.Client
+	*tcp.Client
 	opts   *TcpClientOptions
 	seqidx uint32
 	cb     sync.Map
+}
+
+func (s *TcpClient) Send(p *Message) error {
+	return s.Client.Send(p)
+}
+
+func (s *TcpClient) SessionType() string {
+	return "tcp-session"
 }
 
 func (c *TcpClient) SetCallback(askid uint32, f FuncRespCallback) {
@@ -64,14 +71,15 @@ func (c *TcpClient) GetCallback(askid uint32) FuncRespCallback {
 	return nil
 }
 
-func (c *TcpClient) OnTcpMessage(socket *tcp.Client, p *tcp.THVPacket) {
-	msg := pkg2msg(p)
-	if msg.Head.Msgtype == 2 {
-		if cb := c.GetCallback(msg.Head.Seqid); cb != nil {
-			cb(nil, c, msg)
-			return
-		}
+func (c *TcpClient) OnMessage(socket *tcp.Client, p tcp.Packet) {
+	if p.PacketType() != ProtoBinaryRouteType {
+		fmt.Println("unknow packet type:", p.PacketType())
 		return
+	}
+
+	msg, ok := p.(*Message)
+	if !ok {
+		fmt.Println("unknow packet type:", p.PacketType())
 	}
 
 	if c.opts.OnMessage != nil {
@@ -79,22 +87,15 @@ func (c *TcpClient) OnTcpMessage(socket *tcp.Client, p *tcp.THVPacket) {
 	}
 }
 
-func (s *TcpClient) Start() error {
-	return s.imp.Connect()
-}
-
-func (s *TcpClient) RemoteAddr() net.Addr {
-	return s.imp.RemoteAddr()
-}
-
-func (s *TcpClient) OnTcpConn(c *tcp.Client, enable bool) {
-	if enable {
-		s.TcpSession = &TcpSession{
-			imp: c.Socket,
-		}
+func (c *TcpClient) OnConn(socket *tcp.Client) {
+	if c.opts.OnStatus != nil {
+		c.opts.OnStatus(c, true)
 	}
-	if s.opts.OnStatus != nil {
-		s.opts.OnStatus(s, enable)
+}
+
+func (c *TcpClient) OnDisconn(socket *tcp.Client, err error) {
+	if c.opts.OnStatus != nil {
+		c.opts.OnStatus(c, false)
 	}
 }
 
@@ -108,21 +109,22 @@ func SendRequestWithCB[T proto.Message](c *TcpClient, target uint64, ctx context
 }
 
 func (c *TcpClient) SendAsyncMsg(target uint64, req proto.Message) error {
-	head := &Head{
-		Msgname: string(req.ProtoReflect().Descriptor().FullName().Name()),
-		Uid:     target,
-		Msgtype: 0,
-	}
-	body, err := proto.Marshal(req)
-	if err != nil {
-		return err
-	}
-	msg := &Message{
-		ContentType: ProtoBinaryRoute,
-		Head:        head,
-		Body:        body,
-	}
-	return c.imp.SendPacket(msg2pkg(msg))
+	return nil
+	// head := &Head{
+	// 	Msgname: string(req.ProtoReflect().Descriptor().FullName().Name()),
+	// 	Uid:     target,
+	// 	Msgtype: 0,
+	// }
+	// body, err := proto.Marshal(req)
+	// if err != nil {
+	// 	return err
+	// }
+	// msg := &Message{
+	// 	ContentType: ProtoBinaryRoute,
+	// 	Head:        head,
+	// 	Body:        body,
+	// }
+	// return c.imp.SendPacket(msg2pkg(msg))
 }
 
 func (c *TcpClient) NextSeqID() uint32 {
@@ -150,52 +152,62 @@ func NewTcpRespCallbackFunc[T proto.Message](f func(error, *TcpClient, T)) FuncR
 	}
 }
 
-func (c *TcpClient) SendReqMsg(target uint64, req proto.Message, cb FuncRespCallback) error {
-	seqid := c.NextSeqID()
+func (c *TcpClient) SendReqMsg(target uint32, req proto.Message, cb FuncRespCallback) error {
+	var err error
+	msg := &Message{}
 
-	head := &Head{
-		Msgname: string(req.ProtoReflect().Descriptor().FullName().Name()),
-		Uid:     target,
-		Msgtype: 1,
-		Seqid:   seqid,
-	}
-	body, err := proto.Marshal(req)
-	if err != nil {
-		return err
-	}
-	msg := &Message{
-		ContentType: ProtoBinaryRoute,
-		Head:        head,
-		Body:        body,
-	}
+	msg.SetMsgtype(1)
+	msg.SetUid(target)
 
-	c.SetCallback(seqid, cb)
+	// seqid := c.NextSeqID()
+	// head := &Head{
+	// 	Msgname: string(req.ProtoReflect().Descriptor().FullName().Name()),
+	// 	Uid:     target,
+	// 	Msgtype: 1,
+	// 	Seqid:   seqid,
+	// }
+	// body, err := proto.Marshal(req)
+	// if err != nil {
+	// 	return err
+	// }
+	// msg := &Message{
+	// 	ContentType: ProtoBinaryRoute,
+	// 	Head:        head,
+	// 	Body:        body,
+	// }
 
-	err = c.imp.SendPacket(msg2pkg(msg))
-	if err != nil {
-		c.RemoveCallback(seqid)
-	}
+	// c.SetCallback(seqid, cb)
+
+	// err = c.imp.SendPacket(msg2pkg(msg))
+	// if err != nil {
+	// 	c.RemoveCallback(seqid)
+	// }
+
 	return err
 }
 
-func (c *TcpClient) SendRespMsg(target uint64, seqid uint32, resp proto.Message, resperr *Error) error {
-	head := &Head{
-		Msgname: string(resp.ProtoReflect().Descriptor().FullName().Name()),
-		Uid:     target,
-		Seqid:   seqid,
-		Err:     resperr,
-		Msgtype: 2,
-	}
-	body, err := proto.Marshal(resp)
-	if err != nil {
-		return err
-	}
-	m := &Message{
-		ContentType: ProtoBinaryRoute,
-		Head:        head,
-		Body:        body,
-	}
-	return c.imp.SendPacket(msg2pkg(m))
+func (c *TcpClient) SendRespMsg(target uint64, seqid uint32, resp proto.Message) error {
+
+	var err error
+	return err
+
+	// head := &Head{
+	// 	Msgname: string(resp.ProtoReflect().Descriptor().FullName().Name()),
+	// 	Uid:     target,
+	// 	Seqid:   seqid,
+	// 	Err:     resperr,
+	// 	Msgtype: 2,
+	// }
+	// body, err := proto.Marshal(resp)
+	// if err != nil {
+	// 	return err
+	// }
+	// m := &Message{
+	// 	ContentType: ProtoBinaryRoute,
+	// 	Head:        head,
+	// 	Body:        body,
+	// }
+	// return c.imp.SendPacket(msg2pkg(m))
 }
 
 func (c *TcpClient) SyncCall(target uint64, ctx context.Context, req proto.Message, resp proto.Message) error {

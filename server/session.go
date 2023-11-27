@@ -12,7 +12,7 @@ import (
 // 2. web socket session
 
 type User interface {
-	UserID() uint64
+	UserID() uint32
 	UserRole() string
 	UserName() string
 }
@@ -23,7 +23,7 @@ type Session interface {
 	SessionID() string
 	SessionType() string
 
-	Valid() bool
+	IsValid() bool
 	Close() error
 	Send(msg *Message) error
 

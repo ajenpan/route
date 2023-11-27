@@ -1,6 +1,7 @@
 package tcp
 
 import (
+	"errors"
 	"net"
 	"sync"
 	"sync/atomic"
@@ -9,19 +10,20 @@ import (
 	"route/auth"
 )
 
-type SocketStat int32
-
-const (
-	Disconnected SocketStat = iota
-	Connected    SocketStat = iota
-)
+var ErrDisconn = errors.New("socket disconnected")
+var ErrInvalidPacket = errors.New("invalid packet")
 
 var DefaultTimeoutSec = 30
 var DefaultMinTimeoutSec = 10
 
-type OnMessageFunc func(*Socket, *THVPacket)
-type OnConnStatFunc func(*Socket, bool)
-type NewIDFunc func() string
+type SocketStatus int32
+
+const (
+	Disconnected SocketStatus = iota
+	Connectting  SocketStatus = iota
+	Handshake    SocketStatus = iota
+	Connected    SocketStatus = iota
+)
 
 type SocketOptions struct {
 	ID      string
@@ -39,9 +41,10 @@ func NewSocket(conn net.Conn, opts SocketOptions) *Socket {
 		id:       opts.ID,
 		conn:     conn,
 		timeOut:  opts.Timeout,
-		chSend:   make(chan Packet, 100),
+		chWrite:  make(chan Packet, 100),
 		chClosed: make(chan struct{}),
-		state:    Connected,
+
+		status: Handshake,
 	}
 	return ret
 }
@@ -53,30 +56,35 @@ type Socket struct {
 	conn net.Conn
 	id   string
 
-	chSend   chan Packet // push message queue
+	chWrite  chan Packet
 	chClosed chan struct{}
 
 	timeOut time.Duration
 
 	lastSendAt int64
 	lastRecvAt int64
-	state      SocketStat
+
+	status SocketStatus
 }
 
 func (s *Socket) SessionID() string {
 	return s.id
 }
 
-func (s *Socket) SendPacket(p Packet) error {
-	if atomic.LoadInt32((*int32)(&s.state)) == int32(Disconnected) {
+func (s *Socket) Send(p Packet) error {
+	if !s.IsValid() {
 		return ErrDisconn
 	}
-	s.chSend <- p
+	select {
+	case <-s.chClosed:
+		return ErrDisconn
+	case s.chWrite <- p:
+	}
 	return nil
 }
 
 func (s *Socket) Close() error {
-	stat := atomic.SwapInt32((*int32)(&s.state), int32(Disconnected))
+	stat := atomic.SwapInt32((*int32)(&s.status), int32(Disconnected))
 	if stat == int32(Disconnected) {
 		return nil
 	}
@@ -87,67 +95,52 @@ func (s *Socket) Close() error {
 	default:
 		close(s.chClosed)
 	}
+
 	if s.conn != nil {
 		s.conn.Close()
 		s.conn = nil
 	}
-	close(s.chSend)
+	close(s.chWrite)
 	return nil
 }
 
 // returns the remote network address.
 func (s *Socket) RemoteAddr() net.Addr {
-	if s == nil {
-		return nil
-	}
-	if s.conn == nil {
+	if s == nil || s.conn == nil {
 		return nil
 	}
 	return s.conn.RemoteAddr()
 }
 
 func (s *Socket) LocalAddr() net.Addr {
-	if s == nil {
-		return nil
-	}
-	if s.conn == nil {
+	if s == nil || s.conn == nil {
 		return nil
 	}
 	return s.conn.LocalAddr()
 }
 
-func (s *Socket) Valid() bool {
+func (s *Socket) IsValid() bool {
 	return s.Status() == Connected
 }
 
 // retrun socket work status
-func (s *Socket) Status() SocketStat {
-	return SocketStat(atomic.LoadInt32((*int32)(&s.state)))
+func (s *Socket) Status() SocketStatus {
+	return SocketStatus(atomic.LoadInt32((*int32)(&s.status)))
 }
-
-// func (s *Socket) read(p Packet) error {
-// 	if s.Status() == Disconnected {
-// 		return ErrDisconn
-// 	}
-// 	err := readPacket(s.conn, p, s.timeOut)
-// 	s.lastRecvAt = time.Now().Unix()
-// 	return err
-// }
 
 func (s *Socket) writeWork() error {
 	defer func() {
 		s.Close()
 	}()
-
 	for {
 		select {
 		case <-s.chClosed:
 			return nil
-		case p, ok := <-s.chSend:
+		case p, ok := <-s.chWrite:
 			if !ok {
 				return nil
 			}
-			if err := writePacket(s.conn, p, s.timeOut); err != nil {
+			if err := writePacket(s.conn, s.timeOut, p); err != nil {
 				return err
 			}
 			s.lastSendAt = time.Now().Unix()
@@ -155,19 +148,16 @@ func (s *Socket) writeWork() error {
 	}
 }
 
-func (s *Socket) readWork(recv chan<- *THVPacket) error {
+func (s *Socket) readWork(recv chan<- Packet) error {
 	defer func() {
 		s.Close()
 	}()
-
 	for {
 		select {
 		case <-s.chClosed:
 			return nil
 		default:
-			// TODO: with pool
-			p := newEmptyTHVPacket()
-			err := readPacket(s.conn, p, s.timeOut)
+			p, err := readPacket(s.conn, s.timeOut)
 			if err != nil {
 				return err
 			}
@@ -177,18 +167,72 @@ func (s *Socket) readWork(recv chan<- *THVPacket) error {
 	}
 }
 
-func readPacket(conn net.Conn, p Packet, timeout time.Duration) error {
+func readPacket(conn net.Conn, timeout time.Duration) (Packet, error) {
 	if timeout > 0 {
 		conn.SetReadDeadline(time.Now().Add(timeout))
 	}
-	_, err := p.ReadFrom(conn)
-	return err
+	var err error
+	pktype := make([]byte, 1)
+	_, err = conn.Read(pktype)
+	if err != nil {
+		return nil, err
+	}
+
+	pk := NewPacket(pktype[0])
+	if pk == nil {
+		return nil, ErrInvalidPacket
+	}
+	_, err = pk.ReadFrom(conn)
+	return pk, err
 }
 
-func writePacket(conn net.Conn, p Packet, timeout time.Duration) error {
+func readPacketT[PacketTypeT Packet](conn net.Conn, timeout time.Duration) (PacketTypeT, error) {
+	pk, err := readPacket(conn, timeout)
+	var pkk PacketTypeT
+	if err != nil {
+		return pkk, err
+	}
+	pkk, ok := pk.(PacketTypeT)
+	if !ok {
+		return pkk, ErrInvalidPacket
+	}
+	return pkk, nil
+}
+
+func writePacket(conn net.Conn, timeout time.Duration, p Packet) error {
+
 	if timeout > 0 {
 		conn.SetWriteDeadline(time.Now().Add(timeout))
 	}
-	_, err := p.WriteTo(conn)
+	var err error
+	_, err = conn.Write([]byte{p.PacketType()})
+	if err != nil {
+		return err
+	}
+	_, err = p.WriteTo(conn)
 	return err
 }
+
+// func readHVPacket(conn net.Conn, p *hvPacket, timeout time.Duration) error {
+// 	if timeout > 0 {
+// 		conn.SetReadDeadline(time.Now().Add(timeout))
+// 	}
+// 	if _, err := io.ReadFull(conn, p.head); err != nil {
+// 		return err
+// 	}
+// 	if err := p.head.check(); err != nil {
+// 		return err
+// 	}
+// 	bodylen := p.head.getBodyLen()
+// 	if bodylen > 0 {
+// 		if int(bodylen) > cap(p.body) {
+// 			p.body = make([]byte, bodylen)
+// 		} else {
+// 			p.body = p.body[:bodylen]
+// 		}
+// 		if _, err := io.ReadFull(conn, p.body); err != nil {
+// 			return err
+// 		}
+// 	}
+// 	return nil
+// }

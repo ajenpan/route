@@ -4,19 +4,24 @@ package route;
 
 option go_package = "/msg";
 
-message MsgSubType {}
-
 message Error {
   int32 code = 1;
   string errmsg = 2;
 }
 
-message Head {
-  uint32 msgtype = 1;
-  string msgname = 2;
-  uint32 seqid = 3;
-  uint64 uid = 4;
-  Error err = 5;
+message ReqestMsgWrap {
+  string msgname = 1;
+  uint32 seqid = 2;
+}
+
+message ResponseMsgWrap {
+  string msgname = 1;
+  uint32 seqid = 2;
+  Error err = 3;
+}
+
+message AsyncMsgWrap {
+  string msgname = 1;
 }
 
 message OSInfo {

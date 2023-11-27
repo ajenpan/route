@@ -3,7 +3,6 @@ package auth
 import (
 	"crypto/rsa"
 	"fmt"
-	"strconv"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
@@ -24,9 +23,8 @@ func VerifyToken(pk *rsa.PublicKey, tokenRaw []byte) (*UserInfo, error) {
 	if uname, has := claims["aud"]; has {
 		ret.UName = uname.(string)
 	}
-	if uidstr, has := claims["uid"]; has {
-		uid, _ := strconv.ParseUint(uidstr.(string), 10, 64)
-		ret.UId = uid
+	if uid, has := claims["uid"]; has {
+		ret.UId = uint32(uid.(float64))
 	}
 	if role, has := claims["rid"]; has {
 		ret.URole = role.(string)
@@ -41,7 +39,7 @@ func GenerateToken(pk *rsa.PrivateKey, uinfo *UserInfo, validity time.Duration) 
 	claims := make(jwt.MapClaims)
 	claims["exp"] = time.Now().Add(24 * time.Hour).Unix()
 	claims["iat"] = time.Now().Unix()
-	claims["uid"] = strconv.FormatUint(uinfo.UId, 10)
+	claims["uid"] = float64(uinfo.UId)
 	claims["aud"] = uinfo.UName
 	claims["rid"] = uinfo.URole
 	claims["iss"] = "hotwave"

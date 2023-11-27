@@ -7,7 +7,6 @@ import (
 	"route/auth"
 
 	"route/server"
-	"route/server/tcp"
 )
 
 func GetSocketUserInfo(s server.Session) *auth.UserInfo {
@@ -43,12 +42,12 @@ func GetSocketFromCtx(ctx context.Context) server.Session {
 	return nil
 }
 
-func GetPacketFromCtx(ctx context.Context) *tcp.THVPacket {
-	if v, ok := ctx.Value(tcpPacketKey).(*tcp.THVPacket); ok {
-		return v
-	}
-	return nil
-}
+// func GetPacketFromCtx(ctx context.Context) *tcp.THVPacket {
+// 	if v, ok := ctx.Value(tcpPacketKey).(*tcp.THVPacket); ok {
+// 		return v
+// 	}
+// 	return nil
+// }
 
 func StringToInt64(s string) uint64 {
 	h := fnv.New64a()
