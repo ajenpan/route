@@ -7,6 +7,9 @@ type UserInfo struct {
 }
 
 func (u *UserInfo) UserID() uint32 {
+	if u == nil {
+		return 0
+	}
 	return u.UId
 }
 func (u *UserInfo) UserRole() string {

@@ -1,8 +1,7 @@
-package websocket
+package server
 
 import (
 	"errors"
-	"fmt"
 	"net"
 	"sync/atomic"
 	"time"
@@ -11,58 +10,36 @@ import (
 	"github.com/gobwas/ws/wsutil"
 )
 
-func NewSocket(id string, c net.Conn) *Socket {
-	ret := &Socket{
+func NewWebSocket(id string, c net.Conn) *webSocket {
+	ret := &webSocket{
 		id:       id,
 		conn:     c,
-		chSend:   make(chan *Packet, 10),
+		chSend:   make(chan *HVPacket, 10),
 		chClosed: make(chan bool),
-		state:    Connected,
 	}
 	return ret
 }
 
-var staticIdx uint64
-
-func nextID() string {
-	idx := atomic.AddUint64(&staticIdx, 1)
-	if idx == 0 {
-		idx = atomic.AddUint64(&staticIdx, 1)
-	}
-	return fmt.Sprintf("ws_%v_%v", idx, time.Now().Unix())
-}
-
-type SocketStat int32
-
-const (
-	Disconnected SocketStat = iota
-	Connected    SocketStat = iota
-)
-
-type OnMessageFunc func(*Socket, *Packet)
-type OnConnStatFunc func(*Socket, SocketStat)
-type NewIDFunc func() string
-
-type SocketOptions struct {
+type webSocketOptions struct {
 	ID string
 }
 
-type Socket struct {
-	conn     net.Conn   // low-level conn fd
-	state    SocketStat // current state
+type webSocket struct {
+	conn     net.Conn      // low-level conn fd
+	state    SessionStatus // current state
 	id       string
-	chSend   chan *Packet // push message queue
+	chSend   chan *HVPacket // push message queue
 	chClosed chan bool
 
 	lastSendAt uint64
 	lastRecvAt uint64
 }
 
-func (s *Socket) ID() string {
+func (s *webSocket) ID() string {
 	return s.id
 }
 
-func (s *Socket) SendPacket(p *Packet) error {
+func (s *webSocket) Send(p *HVPacket) error {
 	if atomic.LoadInt32((*int32)(&s.state)) == int32(Disconnected) {
 		return errors.New("send packet failed, the socket is disconnected")
 	}
@@ -70,13 +47,7 @@ func (s *Socket) SendPacket(p *Packet) error {
 	return nil
 }
 
-func (s *Socket) Send(msgid uint32, body []byte) error {
-	p := &Packet{}
-	p.Body = body
-	return s.SendPacket(p)
-}
-
-func (s *Socket) Close() {
+func (s *webSocket) Close() {
 	stat := atomic.SwapInt32((*int32)(&s.state), int32(Disconnected))
 	if stat == int32(Disconnected) {
 		return
@@ -91,14 +62,14 @@ func (s *Socket) Close() {
 }
 
 // returns the remote network address.
-func (s *Socket) RemoteAddr() net.Addr {
+func (s *webSocket) RemoteAddr() net.Addr {
 	if s == nil {
 		return nil
 	}
 	return s.conn.RemoteAddr()
 }
 
-func (s *Socket) LocalAddr() net.Addr {
+func (s *webSocket) LocalAddr() net.Addr {
 	if s == nil {
 		return nil
 	}
@@ -106,26 +77,27 @@ func (s *Socket) LocalAddr() net.Addr {
 }
 
 // retrun socket work status
-func (s *Socket) Status() SocketStat {
+func (s *webSocket) Status() SessionStatus {
 	if s == nil {
 		return Disconnected
 	}
-	return SocketStat(atomic.LoadInt32((*int32)(&s.state)))
+	return SessionStatus(atomic.LoadInt32((*int32)(&s.state)))
 }
 
-func (s *Socket) writeWork() {
+func (s *webSocket) writeWork() {
 	for p := range s.chSend {
 		s.writePacket(p)
 	}
 }
 
-func (s *Socket) readPacket(p *Packet) error {
+func (s *webSocket) readPacket(p *HVPacket) error {
 	if s.Status() == Disconnected {
 		return errors.New("recv packet failed, the socket is disconnected")
 	}
 
 	var err error
-	p.Body, _, err = wsutil.ReadClientData(s.conn)
+	data, _, err := wsutil.ReadClientData(s.conn)
+	p.SetBody(data)
 
 	if err != nil {
 		return err
@@ -135,12 +107,12 @@ func (s *Socket) readPacket(p *Packet) error {
 	return nil
 }
 
-func (s *Socket) writePacket(p *Packet) error {
+func (s *webSocket) writePacket(p *HVPacket) error {
 	if s.Status() == Disconnected {
 		return errors.New("recv packet failed, the socket is disconnected")
 	}
 
-	err := wsutil.WriteServerMessage(s.conn, ws.OpText, p.Body)
+	err := wsutil.WriteServerMessage(s.conn, ws.OpText, p.GetBody())
 	if err != nil {
 		return err
 	}

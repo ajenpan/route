@@ -1,13 +1,12 @@
-package tcp
+package server
 
 import (
 	"errors"
 	"net"
+	"route/auth"
 	"sync"
 	"sync/atomic"
 	"time"
-
-	"route/auth"
 )
 
 var ErrDisconn = errors.New("socket disconnected")
@@ -16,28 +15,19 @@ var ErrInvalidPacket = errors.New("invalid packet")
 var DefaultTimeoutSec = 30
 var DefaultMinTimeoutSec = 10
 
-type SocketStatus int32
-
-const (
-	Disconnected SocketStatus = iota
-	Connectting  SocketStatus = iota
-	Handshake    SocketStatus = iota
-	Connected    SocketStatus = iota
-)
-
-type SocketOptions struct {
+type tcpSocketOptions struct {
 	ID      string
 	Timeout time.Duration
 }
 
-type SocketOption func(*SocketOptions)
+type tcpSocketOption func(*tcpSocketOptions)
 
-func NewSocket(conn net.Conn, opts SocketOptions) *Socket {
+func NewTcpSocket(conn net.Conn, opts tcpSocketOptions) *tcpSocket {
 	if opts.Timeout < time.Duration(DefaultMinTimeoutSec)*time.Second {
 		opts.Timeout = time.Duration(DefaultTimeoutSec) * time.Second
 	}
 
-	ret := &Socket{
+	ret := &tcpSocket{
 		id:       opts.ID,
 		conn:     conn,
 		timeOut:  opts.Timeout,
@@ -49,7 +39,7 @@ func NewSocket(conn net.Conn, opts SocketOptions) *Socket {
 	return ret
 }
 
-type Socket struct {
+type tcpSocket struct {
 	auth.UserInfo
 	Meta sync.Map
 
@@ -64,14 +54,18 @@ type Socket struct {
 	lastSendAt int64
 	lastRecvAt int64
 
-	status SocketStatus
+	status SessionStatus
 }
 
-func (s *Socket) SessionID() string {
+func (s *tcpSocket) SessionID() string {
 	return s.id
 }
 
-func (s *Socket) Send(p Packet) error {
+func (s *tcpSocket) SessionType() string {
+	return "tcp"
+}
+
+func (s *tcpSocket) Send(p Packet) error {
 	if !s.IsValid() {
 		return ErrDisconn
 	}
@@ -83,7 +77,7 @@ func (s *Socket) Send(p Packet) error {
 	return nil
 }
 
-func (s *Socket) Close() error {
+func (s *tcpSocket) Close() error {
 	stat := atomic.SwapInt32((*int32)(&s.status), int32(Disconnected))
 	if stat == int32(Disconnected) {
 		return nil
@@ -105,30 +99,30 @@ func (s *Socket) Close() error {
 }
 
 // returns the remote network address.
-func (s *Socket) RemoteAddr() net.Addr {
+func (s *tcpSocket) RemoteAddr() net.Addr {
 	if s == nil || s.conn == nil {
 		return nil
 	}
 	return s.conn.RemoteAddr()
 }
 
-func (s *Socket) LocalAddr() net.Addr {
+func (s *tcpSocket) LocalAddr() net.Addr {
 	if s == nil || s.conn == nil {
 		return nil
 	}
 	return s.conn.LocalAddr()
 }
 
-func (s *Socket) IsValid() bool {
+func (s *tcpSocket) IsValid() bool {
 	return s.Status() == Connected
 }
 
 // retrun socket work status
-func (s *Socket) Status() SocketStatus {
-	return SocketStatus(atomic.LoadInt32((*int32)(&s.status)))
+func (s *tcpSocket) Status() SessionStatus {
+	return SessionStatus(atomic.LoadInt32((*int32)(&s.status)))
 }
 
-func (s *Socket) writeWork() error {
+func (s *tcpSocket) writeWork() error {
 	defer func() {
 		s.Close()
 	}()
@@ -140,7 +134,7 @@ func (s *Socket) writeWork() error {
 			if !ok {
 				return nil
 			}
-			if err := writePacket(s.conn, s.timeOut, p); err != nil {
+			if err := WritePacket(s.conn, s.timeOut, p); err != nil {
 				return err
 			}
 			s.lastSendAt = time.Now().Unix()
@@ -148,7 +142,7 @@ func (s *Socket) writeWork() error {
 	}
 }
 
-func (s *Socket) readWork(recv chan<- Packet) error {
+func (s *tcpSocket) readWork(recv chan<- Packet) error {
 	defer func() {
 		s.Close()
 	}()
@@ -157,7 +151,7 @@ func (s *Socket) readWork(recv chan<- Packet) error {
 		case <-s.chClosed:
 			return nil
 		default:
-			p, err := readPacket(s.conn, s.timeOut)
+			p, err := ReadPacket(s.conn, s.timeOut)
 			if err != nil {
 				return err
 			}
@@ -167,7 +161,7 @@ func (s *Socket) readWork(recv chan<- Packet) error {
 	}
 }
 
-func readPacket(conn net.Conn, timeout time.Duration) (Packet, error) {
+func ReadPacket(conn net.Conn, timeout time.Duration) (Packet, error) {
 	if timeout > 0 {
 		conn.SetReadDeadline(time.Now().Add(timeout))
 	}
@@ -177,7 +171,6 @@ func readPacket(conn net.Conn, timeout time.Duration) (Packet, error) {
 	if err != nil {
 		return nil, err
 	}
-
 	pk := NewPacket(pktype[0])
 	if pk == nil {
 		return nil, ErrInvalidPacket
@@ -186,8 +179,8 @@ func readPacket(conn net.Conn, timeout time.Duration) (Packet, error) {
 	return pk, err
 }
 
-func readPacketT[PacketTypeT Packet](conn net.Conn, timeout time.Duration) (PacketTypeT, error) {
-	pk, err := readPacket(conn, timeout)
+func ReadPacketT[PacketTypeT Packet](conn net.Conn, timeout time.Duration) (PacketTypeT, error) {
+	pk, err := ReadPacket(conn, timeout)
 	var pkk PacketTypeT
 	if err != nil {
 		return pkk, err
@@ -199,8 +192,7 @@ func readPacketT[PacketTypeT Packet](conn net.Conn, timeout time.Duration) (Pack
 	return pkk, nil
 }
 
-func writePacket(conn net.Conn, timeout time.Duration, p Packet) error {
-
+func WritePacket(conn net.Conn, timeout time.Duration, p Packet) error {
 	if timeout > 0 {
 		conn.SetWriteDeadline(time.Now().Add(timeout))
 	}
@@ -212,27 +204,3 @@ func writePacket(conn net.Conn, timeout time.Duration, p Packet) error {
 	_, err = p.WriteTo(conn)
 	return err
 }
-
-// func readHVPacket(conn net.Conn, p *hvPacket, timeout time.Duration) error {
-// 	if timeout > 0 {
-// 		conn.SetReadDeadline(time.Now().Add(timeout))
-// 	}
-// 	if _, err := io.ReadFull(conn, p.head); err != nil {
-// 		return err
-// 	}
-// 	if err := p.head.check(); err != nil {
-// 		return err
-// 	}
-// 	bodylen := p.head.getBodyLen()
-// 	if bodylen > 0 {
-// 		if int(bodylen) > cap(p.body) {
-// 			p.body = make([]byte, bodylen)
-// 		} else {
-// 			p.body = p.body[:bodylen]
-// 		}
-// 		if _, err := io.ReadFull(conn, p.body); err != nil {
-// 			return err
-// 		}
-// 	}
-// 	return nil
-// }

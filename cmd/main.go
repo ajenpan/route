@@ -63,11 +63,11 @@ func WaitShutdown() os.Signal {
 
 func StartServer(listenAt string) {
 	var err error
-	ppk, pk, err := LoadAuthKey()
+	privateKey, publicKey, err := LoadAuthKey()
 	if err != nil {
 		panic(err)
 	}
-	jwt, _ := auth.GenerateToken(ppk, &auth.UserInfo{
+	jwt, _ := auth.GenerateToken(privateKey, &auth.UserInfo{
 		UId:   10001,
 		UName: "gdclient",
 		URole: "user",
@@ -79,11 +79,14 @@ func StartServer(listenAt string) {
 	if err != nil {
 		panic(err)
 	}
-	svropt := &server.TcpServerOptions{
-		AuthPublicKey:    pk,
+	svropt := server.TcpServerOptions{
+		AuthFunc: func(b []byte) (*auth.UserInfo, error) {
+			return auth.VerifyToken(publicKey, b)
+		},
 		ListenAddr:       listenAt,
-		OnSessionMessage: h.OnSessionMessage,
-		OnSessionStatus:  h.OnSessionStatus,
+		OnSessionPacket:  h.OnSessionMessage,
+		OnSessionConn:    h.OnSessionConn,
+		OnSessionDisconn: h.OnSessionDisconn,
 	}
 	svr, err := server.NewTcpServer(svropt)
 	if err != nil {
@@ -95,12 +98,6 @@ func StartServer(listenAt string) {
 	go svr.Start()
 
 	WaitShutdown()
-}
-
-func main() {
-	if err := Run(); err != nil {
-		fmt.Println(err)
-	}
 }
 
 var (
@@ -123,7 +120,16 @@ func longVersion() string {
 	return buf.String()
 }
 
-func Run() error {
+func RealMain(c *cli.Context) error {
+	listenAt := ":8080"
+	if c.Args().Len() == 2 {
+		listenAt = c.Args().Get(1)
+	}
+	StartServer(listenAt)
+	return nil
+}
+
+func main() {
 	cli.VersionPrinter = func(c *cli.Context) {
 		fmt.Println(longVersion())
 	}
@@ -132,15 +138,7 @@ func Run() error {
 	app.Name = Name
 	app.Action = RealMain
 	err := app.Run(os.Args)
-	return err
-}
-
-func RealMain(c *cli.Context) error {
-
-	listenAt := ":8080"
-	if c.Args().Len() == 2 {
-		listenAt = c.Args().Get(1)
+	if err != nil {
+		fmt.Println(err)
 	}
-	StartServer(listenAt)
-	return nil
 }

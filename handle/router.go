@@ -36,7 +36,7 @@ var tcpSocketKey = tcpSocketKeyT{}
 var tcpPacketKey = tcpPacketKeyT{}
 
 func (r *Router) OnSessionStatus(s server.Session, enable bool) {
-	fmt.Printf("OnSessionStatus: %v %v %v, %v \n", s.SessionID(), s.RemoteAddr(), s.UserName(), enable)
+	fmt.Printf("OnSessionStatus: %v %v, %v \n", s.SessionID(), s.RemoteAddr(), enable)
 
 	currSession := r.GetUserSession(s.UserID())
 	if enable {
@@ -54,32 +54,45 @@ func (r *Router) OnSessionStatus(s server.Session, enable bool) {
 	}
 }
 
-func (r *Router) OnSessionMessage(s server.Session, m *server.Message) {
+func (r *Router) OnSessionConn(s server.Session) {
+	r.OnSessionStatus(s, true)
+}
 
-	var err error
-	targetuid := m.GetUid()
+func (r *Router) OnSessionDisconn(s server.Session, err error) {
+	r.OnSessionStatus(s, false)
+}
 
-	if targetuid == 0 {
-		//call my self
-		r.OnCall(s, m)
-		return
-	}
+func (r *Router) OnSessionMessage(s server.Session, m server.Packet) {
 
-	targetSess := r.GetUserSession(targetuid)
-	if targetSess == nil {
-		//TODO: send err to source
-		log.Println("session not found")
-		return
-	}
+	switch m := m.(type) {
+	case *server.RoutePacket:
+		var err error
+		targetuid := m.GetUid()
 
-	if !r.forwardEnable(s, targetSess, m) {
-		return
-	}
+		if targetuid == 0 {
+			//call my self
+			r.OnCall(s, m)
+			return
+		}
 
-	m.SetUid(s.UserID())
-	err = targetSess.Send(m)
-	if err != nil {
-		log.Println(err)
+		targetSess := r.GetUserSession(targetuid)
+		if targetSess == nil {
+			//TODO: send err to source
+			log.Println("session not found")
+			return
+		}
+
+		if !r.forwardEnable(s, targetSess, m) {
+			return
+		}
+
+		m.SetUid(s.UserID())
+		err = targetSess.Send(m)
+		if err != nil {
+			log.Println(err)
+		}
+	default:
+
 	}
 }
 
@@ -131,7 +144,7 @@ func (r *Router) PublishEvent(event proto.Message) {
 	log.Printf("[Mock PublishEvent] name:%v, msg:%v\n", string(proto.MessageName(event).Name()), event)
 }
 
-func (r *Router) OnCall(s server.Session, msg *server.Message) {
+func (r *Router) OnCall(s server.Session, msg *server.RoutePacket) {
 	// var err error
 
 	// msgid := int(head.GetMsgID())
@@ -211,7 +224,7 @@ func (r *Router) OnCall(s server.Session, msg *server.Message) {
 	// }
 }
 
-func (r *Router) forwardEnable(s server.Session, target server.Session, msg *server.Message) bool {
+func (r *Router) forwardEnable(s server.Session, target server.Session, msg *server.RoutePacket) bool {
 	// suinfo := GetSocketUserInfo(s)
 	// tuinfo := GetSocketUserInfo(target)
 	// if suinfo == nil || tuinfo == nil {

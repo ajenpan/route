@@ -1,8 +1,7 @@
-package websocket
+package server
 
 import (
 	"context"
-	"log"
 	"net/http"
 	"time"
 
@@ -18,18 +17,16 @@ func NewServer(opts ServerOptions) *HttpServer {
 		},
 	}
 
-	if ret.opts.NewIDFunc == nil {
-		ret.opts.NewIDFunc = nextID
-	}
 	return ret
 }
 
 type ServerOptions struct {
 	Address          string
 	HeatbeatInterval time.Duration
-	OnMessage        OnMessageFunc
-	OnConn           OnConnStatFunc
-	NewIDFunc        NewIDFunc
+	OnSocketMessage  FuncOnSessionPacket
+	OnSocketConn     FuncOnSessionConn
+	OnSocketDisconn  FuncOnSessionDisconn
+	OnAccpect        FuncOnAccpect
 }
 
 type HttpServer struct {
@@ -43,30 +40,29 @@ func (s *HttpServer) Start() error {
 	s.httpsvr.Handler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		conn, _, _, err := ws.UpgradeHTTP(r, w)
 		if err != nil {
-			log.Println(err)
 			return
 		}
 
-		socket := NewSocket(s.opts.NewIDFunc(), conn)
+		socket := NewWebSocket(NewSessionID(), conn)
 		defer socket.Close()
 
-		if s.opts.OnConn != nil {
-			s.opts.OnConn(socket, Connected)
-			defer s.opts.OnConn(socket, Disconnected)
-		}
+		// if s.opts.OnConn != nil {
+		// 	s.opts.OnConn(socket, Connected)
+		// 	defer s.opts.OnConn(socket, Disconnected)
+		// }
 
 		go socket.writeWork()
 
 		for {
-			p := &Packet{}
-			err := socket.readPacket(p)
-			if err != nil {
-				break
-			}
+			// p := &Packet{}
+			// err := socket.readPacket(p)
+			// if err != nil {
+			// 	break
+			// }
 
-			if s.opts.OnMessage != nil {
-				s.opts.OnMessage(socket, p)
-			}
+			// if s.opts.OnMessage != nil {
+			// 	s.opts.OnMessage(socket, p)
+			// }
 
 		}
 	})
