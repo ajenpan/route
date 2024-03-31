@@ -12,6 +12,7 @@ import (
 	"route/auth"
 	"route/handle"
 	"route/server"
+	"route/utils"
 
 	"os/signal"
 
@@ -24,7 +25,7 @@ const PublicKeyFile = "public.pem"
 func ReadRSAKey() ([]byte, []byte, error) {
 	privateRaw, err := os.ReadFile(PrivateKeyFile)
 	if err != nil {
-		privateKey, publicKey, err := GenerateRsaPem(512)
+		privateKey, publicKey, err := utils.GenerateRsaPem(512)
 		if err != nil {
 			return nil, nil, err
 		}
@@ -44,11 +45,11 @@ func LoadAuthKey() (*rsa.PrivateKey, *rsa.PublicKey, error) {
 	if err != nil {
 		return nil, nil, err
 	}
-	pr, err := ParseRsaPrivateKeyFromPem(rawpr)
+	pr, err := utils.ParseRsaPrivateKeyFromPem(rawpr)
 	if err != nil {
 		return nil, nil, err
 	}
-	pu, err := ParseRsaPublicKeyFromPem(rawpu)
+	pu, err := utils.ParseRsaPublicKeyFromPem(rawpu)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -81,12 +82,11 @@ func StartServer(listenAt string) {
 	}
 	svropt := server.TcpServerOptions{
 		AuthFunc: func(b []byte) (*auth.UserInfo, error) {
-			return auth.VerifyToken(publicKey, b)
+			return auth.VerifyToken(publicKey, string(b))
 		},
-		ListenAddr:       listenAt,
-		OnSessionPacket:  h.OnSessionMessage,
-		OnSessionConn:    h.OnSessionConn,
-		OnSessionDisconn: h.OnSessionDisconn,
+		ListenAddr:      listenAt,
+		OnSessionPacket: h.OnSessionMessage,
+		OnSessionStatus: h.OnSessionStatus,
 	}
 	svr, err := server.NewTcpServer(svropt)
 	if err != nil {
@@ -94,8 +94,9 @@ func StartServer(listenAt string) {
 	}
 
 	defer svr.Stop()
+
 	fmt.Println("server started,listening on ", listenAt)
-	go svr.Start()
+	svr.Start()
 
 	WaitShutdown()
 }

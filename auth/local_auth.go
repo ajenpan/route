@@ -9,5 +9,5 @@ type LocalAuth struct {
 }
 
 func (a *LocalAuth) TokenAuth(token []byte) (*UserInfo, error) {
-	return VerifyToken(a.PK, token)
+	return VerifyToken(a.PK, string(token))
 }

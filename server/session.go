@@ -26,8 +26,7 @@ type Session interface {
 }
 
 type FuncOnSessionPacket func(Session, Packet)
-type FuncOnSessionConn func(Session)
-type FuncOnSessionDisconn func(Session, error)
+type FuncOnSessionStatus func(s Session, enable bool)
 type FuncOnAccpect func(net.Conn) bool
 
 var sid int64 = 0
@@ -36,7 +35,7 @@ func NewSessionID() string {
 	return fmt.Sprintf("%d_%d", atomic.AddInt64(&sid, 1), time.Now().Unix())
 }
 
-type SessionStatus int32
+type SessionStatus = int32
 
 const (
 	Disconnected SessionStatus = iota

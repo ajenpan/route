@@ -24,8 +24,6 @@ type ServerOptions struct {
 	Address          string
 	HeatbeatInterval time.Duration
 	OnSocketMessage  FuncOnSessionPacket
-	OnSocketConn     FuncOnSessionConn
-	OnSocketDisconn  FuncOnSessionDisconn
 	OnAccpect        FuncOnAccpect
 }
 

@@ -2,6 +2,7 @@ package server
 
 import (
 	"errors"
+	"io"
 	"net"
 	"route/auth"
 	"sync"
@@ -15,30 +16,6 @@ var ErrInvalidPacket = errors.New("invalid packet")
 var DefaultTimeoutSec = 30
 var DefaultMinTimeoutSec = 10
 
-type tcpSocketOptions struct {
-	ID      string
-	Timeout time.Duration
-}
-
-type tcpSocketOption func(*tcpSocketOptions)
-
-func NewTcpSocket(conn net.Conn, opts tcpSocketOptions) *tcpSocket {
-	if opts.Timeout < time.Duration(DefaultMinTimeoutSec)*time.Second {
-		opts.Timeout = time.Duration(DefaultTimeoutSec) * time.Second
-	}
-
-	ret := &tcpSocket{
-		id:       opts.ID,
-		conn:     conn,
-		timeOut:  opts.Timeout,
-		chWrite:  make(chan Packet, 100),
-		chClosed: make(chan struct{}),
-
-		status: Handshake,
-	}
-	return ret
-}
-
 type tcpSocket struct {
 	auth.UserInfo
 	Meta sync.Map
@@ -47,6 +24,7 @@ type tcpSocket struct {
 	id   string
 
 	chWrite  chan Packet
+	chRead   chan Packet
 	chClosed chan struct{}
 
 	timeOut time.Duration
@@ -55,6 +33,8 @@ type tcpSocket struct {
 	lastRecvAt int64
 
 	status SessionStatus
+
+	writeSize int64
 }
 
 func (s *tcpSocket) SessionID() string {
@@ -71,15 +51,15 @@ func (s *tcpSocket) Send(p Packet) error {
 	}
 	select {
 	case <-s.chClosed:
-		return ErrDisconn
+		return ErrInvalidPacket
 	case s.chWrite <- p:
+		return nil
 	}
-	return nil
 }
 
 func (s *tcpSocket) Close() error {
-	stat := atomic.SwapInt32((*int32)(&s.status), int32(Disconnected))
-	if stat == int32(Disconnected) {
+	old := atomic.SwapInt32((*int32)(&s.status), int32(Disconnected))
+	if old != Connected {
 		return nil
 	}
 
@@ -88,26 +68,22 @@ func (s *tcpSocket) Close() error {
 		return nil
 	default:
 		close(s.chClosed)
+		// close(s.chWrite)
+		// close(s.chRead)
+		return nil
 	}
-
-	if s.conn != nil {
-		s.conn.Close()
-		s.conn = nil
-	}
-	close(s.chWrite)
-	return nil
 }
 
 // returns the remote network address.
 func (s *tcpSocket) RemoteAddr() net.Addr {
-	if s == nil || s.conn == nil {
+	if !s.IsValid() {
 		return nil
 	}
 	return s.conn.RemoteAddr()
 }
 
 func (s *tcpSocket) LocalAddr() net.Addr {
-	if s == nil || s.conn == nil {
+	if !s.IsValid() {
 		return nil
 	}
 	return s.conn.LocalAddr()
@@ -123,48 +99,51 @@ func (s *tcpSocket) Status() SessionStatus {
 }
 
 func (s *tcpSocket) writeWork() error {
-	defer func() {
-		s.Close()
-	}()
 	for {
 		select {
 		case <-s.chClosed:
 			return nil
-		case p, ok := <-s.chWrite:
-			if !ok {
-				return nil
-			}
-			if err := WritePacket(s.conn, s.timeOut, p); err != nil {
-				return err
-			}
-			s.lastSendAt = time.Now().Unix()
-		}
-	}
-}
-
-func (s *tcpSocket) readWork(recv chan<- Packet) error {
-	defer func() {
-		s.Close()
-	}()
-	for {
-		select {
-		case <-s.chClosed:
-			return nil
-		default:
-			p, err := ReadPacket(s.conn, s.timeOut)
+		case p := <-s.chWrite:
+			s.conn.SetWriteDeadline(time.Now().Add(s.timeOut))
+			n, err := WritePacket(s.conn, p)
 			if err != nil {
 				return err
 			}
-			s.lastRecvAt = time.Now().Unix()
-			recv <- p
+			s.writeSize += n
+			s.lastSendAt = time.Now().Unix()
+		}
+	}
+
+	// for p := range s.chWrite {
+	// 	s.conn.SetWriteDeadline(time.Now().Add(s.timeOut))
+	// 	n, err := WritePacket(s.conn, p)
+	// 	if err != nil {
+	// 		return err
+	// 	}
+	// 	s.writeSize += n
+	// 	s.lastSendAt = time.Now().Unix()
+	// }
+	// return nil
+}
+
+func (s *tcpSocket) readWork() error {
+	for {
+		s.conn.SetReadDeadline(time.Now().Add(s.timeOut))
+
+		p, err := ReadPacket(s.conn)
+		if err != nil {
+			return err
+		}
+		s.lastRecvAt = time.Now().Unix()
+		select {
+		case <-s.chClosed:
+			return nil
+		case s.chRead <- p:
 		}
 	}
 }
 
-func ReadPacket(conn net.Conn, timeout time.Duration) (Packet, error) {
-	if timeout > 0 {
-		conn.SetReadDeadline(time.Now().Add(timeout))
-	}
+func ReadPacket(conn net.Conn) (Packet, error) {
 	var err error
 	pktype := make([]byte, 1)
 	_, err = conn.Read(pktype)
@@ -179,8 +158,8 @@ func ReadPacket(conn net.Conn, timeout time.Duration) (Packet, error) {
 	return pk, err
 }
 
-func ReadPacketT[PacketTypeT Packet](conn net.Conn, timeout time.Duration) (PacketTypeT, error) {
-	pk, err := ReadPacket(conn, timeout)
+func ReadPacketT[PacketTypeT Packet](conn net.Conn) (PacketTypeT, error) {
+	pk, err := ReadPacket(conn)
 	var pkk PacketTypeT
 	if err != nil {
 		return pkk, err
@@ -192,15 +171,13 @@ func ReadPacketT[PacketTypeT Packet](conn net.Conn, timeout time.Duration) (Pack
 	return pkk, nil
 }
 
-func WritePacket(conn net.Conn, timeout time.Duration, p Packet) error {
-	if timeout > 0 {
-		conn.SetWriteDeadline(time.Now().Add(timeout))
-	}
+func WritePacket(conn io.Writer, p Packet) (int64, error) {
+	var n int64
 	var err error
 	_, err = conn.Write([]byte{p.PacketType()})
 	if err != nil {
-		return err
+		return 0, err
 	}
-	_, err = p.WriteTo(conn)
-	return err
+	n, err = p.WriteTo(conn)
+	return n + 1, err
 }

@@ -8,7 +8,7 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 )
 
-func VerifyToken(pk *rsa.PublicKey, tokenRaw []byte) (*UserInfo, error) {
+func VerifyToken(pk *rsa.PublicKey, tokenRaw string) (*UserInfo, error) {
 	claims := make(jwt.MapClaims)
 	token, err := jwt.ParseWithClaims(string(tokenRaw), claims, func(t *jwt.Token) (interface{}, error) {
 		return pk, nil
@@ -37,19 +37,19 @@ func GenerateToken(pk *rsa.PrivateKey, uinfo *UserInfo, validity time.Duration) 
 		validity = 24 * time.Hour
 	}
 	claims := make(jwt.MapClaims)
-	claims["exp"] = time.Now().Add(24 * time.Hour).Unix()
+	claims["exp"] = time.Now().Add(validity).Unix()
 	claims["iat"] = time.Now().Unix()
 	claims["uid"] = float64(uinfo.UId)
 	claims["aud"] = uinfo.UName
 	claims["rid"] = uinfo.URole
-	claims["iss"] = "hotwave"
+	claims["iss"] = "hw"
 	claims["sub"] = "auth"
 	token := jwt.NewWithClaims(jwt.SigningMethodRS256, claims)
 	return token.SignedString(pk)
 }
 
-func RsaTokenAuth(pk *rsa.PublicKey) func(data []byte) (*UserInfo, error) {
-	return func(data []byte) (*UserInfo, error) {
+func RsaTokenAuth(pk *rsa.PublicKey) func(data string) (*UserInfo, error) {
+	return func(data string) (*UserInfo, error) {
 		return VerifyToken(pk, data)
 	}
 }

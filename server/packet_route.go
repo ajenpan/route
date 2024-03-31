@@ -5,15 +5,13 @@ import (
 	"io"
 )
 
-const (
-	ProtoBinaryRouteType uint8 = 1 // route
-)
-
-func init() {
-	RegPacket(ProtoBinaryRouteType, func() Packet {
-		return &RoutePacket{}
-	})
+func NewRoutePacket() *RoutePacket {
+	return &RoutePacket{
+		RoutePacketHead: make(RoutePacketHead, RoutePacketHeadLen),
+	}
 }
+
+const RoutePacketHeadLen = 8
 
 type RoutePacketHead []byte
 
@@ -22,11 +20,11 @@ type RoutePacket struct {
 	Body []byte
 }
 
-func (m *RoutePacket) GetMsgtype() uint8 {
+func (m *RoutePacket) GetMsgtype() byte {
 	return m.RoutePacketHead[0]
 }
 
-func (m *RoutePacket) SetMsgtype(typ uint8) {
+func (m *RoutePacket) SetMsgtype(typ byte) {
 	m.RoutePacketHead[0] = typ
 }
 
@@ -38,8 +36,8 @@ func (m *RoutePacket) SetUid(uid uint32) {
 	binary.LittleEndian.PutUint32(m.RoutePacketHead[4:8], uid)
 }
 
-func (m *RoutePacket) PacketType() uint8 {
-	return ProtoBinaryRouteType
+func (m *RoutePacket) PacketType() byte {
+	return RoutePacketType
 }
 
 func (m *RoutePacket) ReadFrom(r io.Reader) (int64, error) {
@@ -54,7 +52,7 @@ func (m *RoutePacket) ReadFrom(r io.Reader) (int64, error) {
 		m.Body = make([]byte, bodylen)
 		_, err = io.ReadFull(r, m.Body)
 	}
-	return (8 + int64(bodylen)), err
+	return (RoutePacketHeadLen + int64(bodylen)), err
 }
 
 func (m *RoutePacket) WriteTo(w io.Writer) (int64, error) {
