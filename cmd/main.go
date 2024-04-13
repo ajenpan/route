@@ -7,7 +7,6 @@ import (
 	"os"
 	"runtime"
 	"syscall"
-	"time"
 
 	"route/auth"
 	"route/handle"
@@ -64,30 +63,31 @@ func WaitShutdown() os.Signal {
 
 func StartServer(listenAt string) {
 	var err error
-	privateKey, publicKey, err := LoadAuthKey()
+	_, publicKey, err := LoadAuthKey()
 	if err != nil {
 		panic(err)
 	}
-	jwt, _ := auth.GenerateToken(privateKey, &auth.UserInfo{
-		UId:   10001,
-		UName: "gdclient",
-		URole: "user",
-	}, 24*time.Hour)
-
-	fmt.Println(jwt)
 
 	h, err := handle.NewRouter()
 	if err != nil {
 		panic(err)
 	}
+
 	svropt := server.TcpServerOptions{
-		AuthFunc: func(b []byte) (*auth.UserInfo, error) {
-			return auth.VerifyToken(publicKey, string(b))
+		AuthFunc: func(b []byte) (*server.UserInfo, error) {
+			info, err := auth.VerifyToken(publicKey, string(b))
+			if err != nil {
+				return nil, err
+			}
+			return &server.UserInfo{
+				UId: info.UId,
+			}, nil
 		},
 		ListenAddr:      listenAt,
 		OnSessionPacket: h.OnSessionMessage,
 		OnSessionStatus: h.OnSessionStatus,
 	}
+
 	svr, err := server.NewTcpServer(svropt)
 	if err != nil {
 		panic(err)

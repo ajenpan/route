@@ -4,8 +4,6 @@ import (
 	"errors"
 	"io"
 	"net"
-	"route/auth"
-	"sync"
 	"sync/atomic"
 	"time"
 )
@@ -16,9 +14,17 @@ var ErrInvalidPacket = errors.New("invalid packet")
 var DefaultTimeoutSec = 30
 var DefaultMinTimeoutSec = 10
 
+type UserInfo struct {
+	UId uint32
+}
+
+func (u *UserInfo) UserID() uint32 {
+	return u.UId
+}
+
 type tcpSocket struct {
-	auth.UserInfo
-	Meta sync.Map
+	UserInfo
+	userData
 
 	conn net.Conn
 	id   string
@@ -51,7 +57,7 @@ func (s *tcpSocket) Send(p Packet) error {
 	}
 	select {
 	case <-s.chClosed:
-		return ErrInvalidPacket
+		return ErrDisconn
 	case s.chWrite <- p:
 		return nil
 	}
@@ -93,7 +99,6 @@ func (s *tcpSocket) IsValid() bool {
 	return s.Status() == Connected
 }
 
-// retrun socket work status
 func (s *tcpSocket) Status() SessionStatus {
 	return SessionStatus(atomic.LoadInt32((*int32)(&s.status)))
 }
@@ -103,7 +108,10 @@ func (s *tcpSocket) writeWork() error {
 		select {
 		case <-s.chClosed:
 			return nil
-		case p := <-s.chWrite:
+		case p, ok := <-s.chWrite:
+			if !ok {
+				return nil
+			}
 			s.conn.SetWriteDeadline(time.Now().Add(s.timeOut))
 			n, err := WritePacket(s.conn, p)
 			if err != nil {
@@ -143,7 +151,7 @@ func (s *tcpSocket) readWork() error {
 	}
 }
 
-func ReadPacket(conn net.Conn) (Packet, error) {
+func ReadPacket(conn io.Reader) (Packet, error) {
 	var err error
 	pktype := make([]byte, 1)
 	_, err = conn.Read(pktype)
@@ -158,7 +166,7 @@ func ReadPacket(conn net.Conn) (Packet, error) {
 	return pk, err
 }
 
-func ReadPacketT[PacketTypeT Packet](conn net.Conn) (PacketTypeT, error) {
+func ReadPacketT[PacketTypeT Packet](conn io.Reader) (PacketTypeT, error) {
 	pk, err := ReadPacket(conn)
 	var pkk PacketTypeT
 	if err != nil {

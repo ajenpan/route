@@ -243,9 +243,9 @@ func (c *tcpClient) doHandShake(conn net.Conn) error {
 	socket.chWrite = make(chan Packet, 100)
 	socket.chRead = make(chan Packet, 100)
 	socket.chClosed = make(chan struct{})
-	socket.Meta = sync.Map{}
 	socket.lastSendAt = time.Now().Unix()
 	socket.lastRecvAt = time.Now().Unix()
+	socket.userData = userData{}
 	return nil
 }
 

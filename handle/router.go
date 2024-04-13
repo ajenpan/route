@@ -75,19 +75,19 @@ func (r *Router) OnSessionMessage(s server.Session, m server.Packet) {
 			return
 		}
 
-		targetSess := r.GetUserSession(targetuid)
-		if targetSess == nil {
+		target := r.GetUserSession(targetuid)
+		if target == nil {
 			//TODO: send err to source
 			log.Println("session not found")
 			return
 		}
 
-		if !r.forwardEnable(s, targetSess, m) {
+		if !r.forwardEnable(s, target, m) {
 			return
 		}
 
 		m.SetUid(s.UserID())
-		err = targetSess.Send(m)
+		err = target.Send(m)
 		if err != nil {
 			log.Println(err)
 		}

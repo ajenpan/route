@@ -5,19 +5,16 @@ import (
 	"net"
 	"sync"
 	"time"
-
-	"route/auth"
 )
 
 type TcpServerOptions struct {
 	ListenAddr       string
 	HeatbeatInterval time.Duration
 
-	AuthFunc        func([]byte) (*auth.UserInfo, error)
+	AuthFunc        func([]byte) (*UserInfo, error)
 	OnSessionPacket FuncOnSessionPacket
 	OnSessionStatus FuncOnSessionStatus
-	// OnSessionDisconn FuncOnSessionDisconn
-	OnAccpect FuncOnAccpect
+	OnAccpect       FuncOnAccpect
 }
 
 type TcpServerOption func(*TcpServerOptions)
@@ -143,21 +140,21 @@ func (s *tcpServer) onAccept(conn net.Conn) {
 				return
 			}
 
-			dealed := false
+			did := false
 
 			if packet.PacketType() == HVPacketType {
 				packet := packet.(*HVPacket)
 				switch packet.GetFlag() {
 				case HVPacketFlagEcho:
 					socket.Send(packet)
-					dealed = true
+					did = true
 				case HVPacketFlagHeartbeat:
 					socket.Send(packet)
-					dealed = true
+					did = true
 				}
 			}
 
-			if !dealed && s.opts.OnSessionPacket != nil {
+			if !did && s.opts.OnSessionPacket != nil {
 				s.opts.OnSessionPacket(socket, packet)
 			}
 		}
@@ -178,7 +175,7 @@ func (s *tcpServer) handshake(conn net.Conn) (*tcpSocket, error) {
 		return nil, ErrInvalidPacket
 	}
 
-	var userinfo *auth.UserInfo
+	var userinfo *UserInfo
 
 	// auth token
 	if s.opts.AuthFunc != nil {

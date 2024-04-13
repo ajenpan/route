@@ -3,18 +3,23 @@ package server
 import (
 	"fmt"
 	"net"
+	"sync"
 	"sync/atomic"
 	"time"
 )
 
 type User interface {
 	UserID() uint32
-	UserRole() string
+}
+
+type UserData interface {
+	SetUserData(key any, value any)
+	GetUserData(key any) (vluae any, has bool)
 }
 
 type Session interface {
 	User
-
+	UserData
 	SessionID() string
 	SessionType() string
 
@@ -43,3 +48,15 @@ const (
 	Handshake    SessionStatus = iota
 	Connected    SessionStatus = iota
 )
+
+type userData struct {
+	sync.Map
+}
+
+func (ud *userData) SetUserData(k any, v any) {
+	ud.Map.Store(k, v)
+}
+
+func (ud *userData) GetUserData(k any) (any, bool) {
+	return ud.Map.Load(k)
+}
